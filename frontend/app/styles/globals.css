@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import 'flowbite';
+
 body{
   font-family: "Inter", sans-serif;
   background-color: lightgray;
@@ -10,3 +12,36 @@ body{
 .home-page{
   padding-top: 300px;
 }
+
+.focus\:ring-4:focus,
+.focus\:outline-none:focus,
+.focus\:z-10:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+@media (min-width: 640px) {
+  .sm\:w-auto {
+      width: 92%;
+  }
+}
+
+
+.banner-custom{
+  width: 500px;
+  border-radius: 10px 10px 0 0;
+}
+
+.banner-custom-bottom{
+  width: 500px;
+  border-radius: 0 0 10px 10px;
+}
+
+.fa-solid{
+  line-height: inherit !important;
+}
+
+button.group.relative.flex.items-stretch.justify-center{
+  width: 230px;
+}
+
