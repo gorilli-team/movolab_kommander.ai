@@ -41,7 +41,11 @@ body{
   line-height: inherit !important;
 }
 
-button.group.relative.flex.items-stretch.justify-center{
+button.button-custom.group.relative.flex.items-stretch.justify-center{
   width: 230px;
+}
+
+.button-submit-custom{
+  width: 100px;
 }
 
