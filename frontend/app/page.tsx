@@ -43,7 +43,7 @@ export default function Home() {
         console.error("Connection error:", error);
       }
     } else if (inputMethod === "audio" && audioFile) {
-
+      console.log("Audio MIME type:", audioFile.type);
       const formData = new FormData();
       formData.append("audio", audioFile, "audioMessage.wav");
 

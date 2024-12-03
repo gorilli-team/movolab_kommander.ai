@@ -1,7 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import { uploadAudio, upload } from './controllers/saveAudioController';
+import { uploadAudio } from './controllers/saveAudioController';
 import { getMessages, createMessage } from './controllers/messageController';
 
 
@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 app.use(cors());
 
 
-app.post('/upload-audio', upload.single('audio'), uploadAudio);
+app.post('/upload-audio', uploadAudio);
 
 
 app.get('/messages', getMessages);

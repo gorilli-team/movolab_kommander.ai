@@ -26,7 +26,8 @@ const AudioMessage: React.FC<AudioMessageProps> = ({ setAudioFile }) => {
 
   const onStop = (recordedData: any) => {
     console.log("Recording stopped. Audio data:", recordedData);
-    setRecordedBlob(recordedData.blob); 
+    console.log("File MIME type:", recordedData.blob.type);
+    setRecordedBlob(recordedData.blob);
     setAudioFile(recordedData.blob);
   };
 
@@ -42,16 +43,24 @@ const AudioMessage: React.FC<AudioMessageProps> = ({ setAudioFile }) => {
         body: formData,
       });
 
+      const responseText = await response.text(); 
+      console.log('Response text:', responseText);
+
       if (response.ok) {
-        const result = await response.json();
-        console.log("Audio uploaded:", result);
+        try {
+          const result = JSON.parse(responseText);
+          console.log("Audio uploaded:", result);
+        } catch (e) {
+          console.error('Error parsing JSON:', e);
+        }
       } else {
-        console.error("Error while uploading the audio:", await response.json());
+        console.error("Error while uploading the audio:", responseText);
       }
     } catch (error) {
       console.error("Connection error:", error);
     }
   };
+
 
   return (
     <div className="flex flex-col items-center">

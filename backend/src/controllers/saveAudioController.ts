@@ -1,11 +1,11 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
 const uploadsDirectory = './uploads';
 if (!fs.existsSync(uploadsDirectory)) {
-  fs.mkdirSync(uploadsDirectory);
+  fs.mkdirSync(uploadsDirectory, { recursive: true });
 }
 
 const storage = multer.diskStorage({
@@ -19,39 +19,35 @@ const storage = multer.diskStorage({
 
 const fileFilter = (req: Request, file: any, cb: any) => {
     console.log('Received file type:', file.mimetype);
-    const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/ogg'];
+    const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm'];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
       cb(new Error('Only audio files are allowed'), false);
     }
-  };
+};
   
 export const upload = multer({ storage: storage, fileFilter: fileFilter });
 
 
-export const uploadAudio = async (req: Request, res: Response) => {
-    upload.single('audio')(req, res, async (err: any) => {
-      if (err) {
-        return res.status(400).json({
-          error: err instanceof Error ? err.message : 'An unexpected error occurred during file upload',
-        });
-      }
-  
-      if (!req.file) {
-        return res.status(400).json({ message: 'No audio file uploaded' });
-      }
-  
-      console.log('File uploaded:', req.file);
-      try {
-        res.status(200).json({
-          message: 'Audio file uploaded successfully',
-          filename: req.file.filename,
-        });
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-        res.status(500).json({ error: errorMessage });
-      }
+export const uploadAudio = (req: Request, res: Response, next: NextFunction) => {
+  upload.single('audio')(req, res, (err: any) => {
+    if (err) {
+      console.error('Error during file upload:', err.message);
+      return res.status(400).json({ error: err.message });
+    }
+
+    if (!req.file) {
+      console.error('No file uploaded');
+      return res.status(400).json({ message: 'No audio file uploaded' });
+    }
+
+    console.log('File uploaded successfully:', req.file);
+    res.status(200).json({
+      message: 'Audio file uploaded successfully',
+      filename: req.file.filename,
     });
-  };
+  });
+};
+
   
