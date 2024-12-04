@@ -7,6 +7,7 @@ import ffmpegPath from 'ffmpeg-static';
 import axios from 'axios';
 import FormData from 'form-data';
 import dotenv from 'dotenv';
+import Message from '../models/messageModel';
 
 dotenv.config();
 
@@ -92,6 +93,8 @@ export const uploadAudio = (req: Request, res: Response, next: NextFunction) => 
   });
 };
 
+const userId = "64b60e4c3c3a1b0f12345678";
+
 const transcribeFileWithWhisper = async (filePath: string) => {
   try {
     const formData = new FormData();
@@ -105,10 +108,20 @@ const transcribeFileWithWhisper = async (filePath: string) => {
       },
     });
 
-    console.log('Transcription result:', response.data.text);
-    return response.data.text;
+    const transcription = response.data.text;
+    console.log('Transcription result:', transcription);
+
+    
+    const message = new Message({
+      message_text: transcription,
+      message_type: 'audio',
+      user_id: userId,
+    });
+
+    await message.save();
+    return transcription;
   } catch (error) {
-    console.error('Error during transcription:', error);
-    throw new Error('Error during transcription');
+    console.error('Error during transcription or DB save:', error);
+    throw new Error('Error during transcription or DB save');
   }
 };
