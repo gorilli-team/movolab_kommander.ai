@@ -4,6 +4,11 @@ import path from 'path';
 import fs from 'fs';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegPath from 'ffmpeg-static';
+import axios from 'axios';
+import FormData from 'form-data';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 if (ffmpegPath) {
   ffmpeg.setFfmpegPath(ffmpegPath);
@@ -37,7 +42,7 @@ const fileFilter = (req: Request, file: any, cb: any) => {
 export const upload = multer({ storage: storage, fileFilter: fileFilter });
 
 export const uploadAudio = (req: Request, res: Response, next: NextFunction) => {
-  upload.single('audio')(req, res, (err: any) => {
+  upload.single('audio')(req, res, async (err: any) => {
     if (err) {
       return res.status(400).json({ error: err.message });
     }
@@ -54,22 +59,56 @@ export const uploadAudio = (req: Request, res: Response, next: NextFunction) => 
       ffmpeg(uploadedFilePath)
         .output(outputFilePath)
         .audioCodec('libmp3lame')
-        .on('end', () => {
+        .on('end', async () => {
           fs.unlinkSync(uploadedFilePath);
-          res.status(200).json({
-            message: 'Audio file uploaded and converted successfully',
-            filename: path.basename(outputFilePath),
-          });
+          try {
+            await transcribeFileWithWhisper(outputFilePath);
+            res.status(200).json({
+              message: 'Audio file uploaded, converted, and transcribed successfully',
+              filename: path.basename(outputFilePath),
+            });
+          } catch (err) {
+            const errorMessage = (err instanceof Error) ? err.message : 'Unknown error occurred';
+            res.status(500).json({ message: 'Error during transcription', error: errorMessage });
+          }
         })
         .on('error', (err: any) => {
-          res.status(500).json({ message: 'Error during file conversion', error: err.message });
+          const errorMessage = (err instanceof Error) ? err.message : 'Unknown error occurred';
+          res.status(500).json({ message: 'Error during file conversion', error: errorMessage });
         })
         .run();
     } else {
-      res.status(200).json({
-        message: 'Audio file uploaded successfully',
-        filename: req.file.filename,
-      });
+      try {
+        await transcribeFileWithWhisper(uploadedFilePath);
+        res.status(200).json({
+          message: 'Audio file uploaded and transcribed successfully',
+          filename: req.file.filename,
+        });
+      } catch (err) {
+        const errorMessage = (err instanceof Error) ? err.message : 'Unknown error occurred';
+        res.status(500).json({ message: 'Error during transcription', error: errorMessage });
+      }
     }
   });
+};
+
+const transcribeFileWithWhisper = async (filePath: string) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', fs.createReadStream(filePath));
+    formData.append('model', 'whisper-1');
+
+    const response = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+    });
+
+    console.log('Transcription result:', response.data.text);
+    return response.data.text;
+  } catch (error) {
+    console.error('Error during transcription:', error);
+    throw new Error('Error during transcription');
+  }
 };
