@@ -49,3 +49,9 @@ button.button-custom.group.relative.flex.items-stretch.justify-center{
   width: 100px;
 }
 
+canvas.sound-wave{
+  width: 420px;
+  border-radius: 10px;
+  height: 80px;
+}
+

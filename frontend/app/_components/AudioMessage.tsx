@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { ReactMic } from "react-mic";
-import { Button } from "flowbite-react";
+import { Button, Spinner } from "flowbite-react";
 
 interface AudioMessageProps {
   setAudioFile: React.Dispatch<React.SetStateAction<Blob | null>>;
@@ -11,6 +11,9 @@ interface AudioMessageProps {
 const AudioMessage: React.FC<AudioMessageProps> = ({ setAudioFile }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [showRecorder, setShowRecorder] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [requestStatus, setRequestStatus] = useState<string | null>(null);
 
   const handleStartRecording = () => {
     setIsRecording(true);
@@ -26,13 +29,21 @@ const AudioMessage: React.FC<AudioMessageProps> = ({ setAudioFile }) => {
 
   const onStop = (recordedData: any) => {
     console.log("Recording stopped. Audio data:", recordedData);
-    console.log("File MIME type:", recordedData.blob.type);
     setRecordedBlob(recordedData.blob);
     setAudioFile(recordedData.blob);
+    setShowRecorder(false);
+  };
+
+  const handleRetry = () => {
+    setRecordedBlob(null);
+    setShowRecorder(true);
+    setRequestStatus(null);
   };
 
   const handleSubmitAudio = async () => {
     if (!recordedBlob) return;
+    setIsLoading(true);
+    setRequestStatus(null);
 
     const formData = new FormData();
     formData.append("audio", recordedBlob, "audioMessage.wav");
@@ -43,62 +54,77 @@ const AudioMessage: React.FC<AudioMessageProps> = ({ setAudioFile }) => {
         body: formData,
       });
 
-      const responseText = await response.text(); 
-      console.log('Response text:', responseText);
-
       if (response.ok) {
-        try {
-          const result = JSON.parse(responseText);
-          console.log("Audio uploaded:", result);
-        } catch (e) {
-          console.error('Error parsing JSON:', e);
-        }
+        const result = await response.json();
+        console.log("Audio uploaded:", result);
+        setRequestStatus("success");
       } else {
-        console.error("Error while uploading the audio:", responseText);
+        console.error("Error while uploading the audio:", await response.json());
+        setRequestStatus("error");
       }
     } catch (error) {
       console.error("Connection error:", error);
+      setRequestStatus("error");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-
   return (
     <div className="flex flex-col items-center">
-      <ReactMic
-        record={isRecording}
-        className="sound-wave"
-        onStop={onStop}
-        onData={onData}
-        strokeColor="#000000"
-        backgroundColor="#ffffff"
-      />
-      <div className="mt-4">
-        {isRecording ? (
-          <button
-            onClick={handleStopRecording}
-            className="px-4 py-2 bg-red-500 text-white rounded"
-          >
-            Stop Recording
-          </button>
-        ) : (
-          <button
-            onClick={handleStartRecording}
-            className="px-4 py-2 bg-blue-500 text-white rounded"
-          >
-            Start Recording
-          </button>
-        )}
-      </div>
+      {showRecorder && (
+        <>
+          <ReactMic
+            record={isRecording}
+            className="sound-wave"
+            onStop={onStop}
+            onData={onData}
+            strokeColor="#000000"
+            backgroundColor="#ffffff"
+          />
+          <div className="mt-4">
+            {isRecording ? (
+              <Button color="warning" onClick={handleStopRecording}>
+                Stop
+              </Button>
+            ) : (
+              <Button color="success" onClick={handleStartRecording}>
+                Registra
+              </Button>
+            )}
+          </div>
+        </>
+      )}
+
       {recordedBlob && (
-        <div className="mt-4">
+        <div className="mt-4 flex flex-col items-center">
           <audio controls src={URL.createObjectURL(recordedBlob)} />
+          <div className="mt-4 flex space-x-4">
+            <Button onClick={handleSubmitAudio} color="gray" disabled={isLoading}>
+              Vai
+            </Button>
+            <Button onClick={handleRetry} color="light" disabled={isLoading}>
+              Registra ancora
+            </Button>
+          </div>
         </div>
       )}
-      {recordedBlob && (
+
+      {isLoading && (
         <div className="mt-4">
-          <Button onClick={handleSubmitAudio} color="blue">
-            Upload Audio
-          </Button>
+          <Spinner aria-label="Loading spinner" size="lg" />
+        </div>
+      )}
+
+      {requestStatus && (
+        <div
+          className={`mt-4 text-lg font-bold ${
+            requestStatus === "success" ? "text-green-500" : "text-red-500"
+          }`}
+        >
+          {requestStatus === "success"
+            ? "Richiesta fatta con successo!"
+            : "Errore durante il caricamento."}
         </div>
       )}
     </div>
