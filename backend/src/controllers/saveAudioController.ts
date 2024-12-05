@@ -8,6 +8,7 @@ import axios from 'axios';
 import FormData from 'form-data';
 import dotenv from 'dotenv';
 import Message from '../models/messageModel';
+import { callChatGpt } from './chatGptController'; 
 
 dotenv.config();
 
@@ -119,6 +120,11 @@ const transcribeFileWithWhisper = async (filePath: string) => {
     });
 
     await message.save();
+
+    console.log('Calling ChatGPT for analysis...');
+    const gptResponse = await callChatGpt(transcription);
+    console.log('ChatGPT Analysis Result:', gptResponse);
+    
     return transcription;
   } catch (error) {
     console.error('Error during transcription or DB save:', error);
