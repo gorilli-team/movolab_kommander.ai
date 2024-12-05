@@ -124,7 +124,13 @@ const transcribeFileWithWhisper = async (filePath: string) => {
     console.log('Calling ChatGPT for analysis...');
     const gptResponse = await callChatGpt(transcription);
     console.log('ChatGPT Analysis Result:', gptResponse);
-    
+
+    const parameters = JSON.parse(gptResponse);
+    message.parameters = parameters;
+    await message.save();
+
+    console.log('Message with parameters saved to DB.');
+
     return transcription;
   } catch (error) {
     console.error('Error during transcription or DB save:', error);

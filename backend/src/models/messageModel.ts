@@ -5,7 +5,8 @@ export interface Message extends Document {
   message_type: 'audio' | 'text';
   user_id: mongoose.Types.ObjectId;
   created_at: Date;
-  updated_at: Date; 
+  updated_at: Date;
+  parameters?: { [key: string]: any };
 }
 
 const MessageSchema: Schema = new Schema(
@@ -15,6 +16,7 @@ const MessageSchema: Schema = new Schema(
     user_id: { type: Schema.Types.ObjectId, ref: "User", required: true },
     created_at: { type: Date, default: Date.now },
     updated_at: { type: Date, default: Date.now },
+    parameters: { type: Map, of: Schema.Types.Mixed, default: {} },
   },
   { versionKey: false }
 );

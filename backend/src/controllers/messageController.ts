@@ -28,6 +28,10 @@ export const createMessage = async (req: Request, res: Response) => {
     const gptResponse = await callChatGpt(message_text);
     console.log('ChatGPT Analysis Result:', gptResponse);
 
+    const parameters = JSON.parse(gptResponse);
+    message.parameters = parameters;
+    await message.save();
+
     res.status(201).json(message);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';

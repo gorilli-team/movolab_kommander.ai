@@ -7,8 +7,18 @@ export const callChatGpt = async (text: string): Promise<string> => {
   try {
     const prompt = `
     Analizza il seguente messaggio: "${text}".
-    Ricava i dati che ritieni importanti per un noleggio auto (es. nome, date di noleggio, tipo di veicolo richiesto, altre preferenze o dettagli).
-    Rispondi in un formato strutturato, elencando i dettagli chiave.
+      Estrai i seguenti parametri:
+      - Data di presa del veicolo (formato: YYYY-MM-DD).
+      - Data di consegna del veicolo (formato: YYYY-MM-DD).
+      - Nome dell'autista.
+      - Tipo di veicolo (auto o moto).
+      Rispondi in formato JSON, come esempio:
+      {
+        "pickup_date": "YYYY-MM-DD",
+        "return_date": "YYYY-MM-DD",
+        "driver_name": "Nome Autista",
+        "vehicle_type": "auto" 
+      }
     `;
 
     const response = await axios.post(
