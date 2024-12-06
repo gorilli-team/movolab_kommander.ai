@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Banner, Button, Spinner } from "flowbite-react";
 import AudioMessage from "./_components/AudioMessage";
 import TextMessage from "./_components/TextMessage";
+import Link from "next/link";
 
 export default function Home() {
   const [inputMethod, setInputMethod] = useState<"text" | "audio" | null>(null);
@@ -134,6 +135,12 @@ export default function Home() {
             : "Errore durante la richiesta."}
         </div>
       )}
+      <div className="mt-8">
+        <Link color="light" href="/veicoli">
+          Vedi veicoli disponibili
+        </Link>
+      </div>
     </div>
+    
   );
 }
