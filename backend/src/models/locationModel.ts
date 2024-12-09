@@ -5,9 +5,13 @@ export interface Location extends Document {
   name: string;
 }
 
-const LocationSchema: Schema = new Schema({
-  name: { type: String, required: true },
-});
+const LocationSchema: Schema = new Schema(
+  {
+    _id: { type: Schema.Types.ObjectId, auto: true },
+    name: { type: String, required: true },
+  },
+  { versionKey: false }
+);
 
 const LocationModel = mongoose.models.Location || mongoose.model<Location>("Location", LocationSchema);
 

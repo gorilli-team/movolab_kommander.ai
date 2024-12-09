@@ -16,41 +16,23 @@ export const createMessage = async (req: Request, res: Response) => {
   const { message_text, message_type, user_id } = req.body;
 
   try {
-    // Crea un nuovo messaggio senza parametri (inizialmente vuoto)
     const message = new Message({
       message_text,
       message_type,
       user_id,
     });
 
-    await message.save(); // Salva il messaggio inizialmente
+    await message.save();
 
     console.log('Calling ChatGPT for analysis...');
     const gptResponse = await callChatGpt(message_text);
-    console.log('GPT Raw Response:', gptResponse);
+    console.log('GPT Response:', gptResponse);
 
-    let parameters;
-    try {
-      // Prova a parsare la risposta di GPT
-      parameters = JSON.parse(gptResponse);
-      console.log('Parsed Parameters:', parameters);
-    } catch (error) {
-      console.error('Failed to parse GPT response:', error);
-      return res.status(400).json({ error: 'Invalid GPT response format' });
-    }
+    message.parameters = gptResponse;
 
-    // Se mancano parametri obbligatori, loggare un avvertimento
-    if (!parameters.pickup_date || !parameters.dropoff_date) {
-      console.warn(
-        'Warning: Missing essential fields (pickup_date or dropoff_date). Proceeding with available data.'
-      );
-    }
-
-    // Aggiungi i parametri al messaggio e salva
-    message.parameters = parameters || {}; // Assegna i parametri disponibili
     await message.save();
 
-    res.status(201).json(message); // Rispondi con il messaggio salvato
+    res.status(201).json(message);
   } catch (error) {
     console.error('Error during message creation:', error);
     const errorMessage =
@@ -58,5 +40,4 @@ export const createMessage = async (req: Request, res: Response) => {
     res.status(400).json({ error: errorMessage });
   }
 };
-
 
