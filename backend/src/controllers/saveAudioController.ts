@@ -112,7 +112,7 @@ const transcribeFileWithWhisper = async (filePath: string) => {
     const transcription = response.data.text;
     console.log('Transcription result:', transcription);
 
-    
+    // Crea il messaggio nel DB
     const message = new Message({
       message_text: transcription,
       message_type: 'audio',
@@ -123,10 +123,18 @@ const transcribeFileWithWhisper = async (filePath: string) => {
 
     console.log('Calling ChatGPT for analysis...');
     const gptResponse = await callChatGpt(transcription);
-    console.log('ChatGPT Analysis Result:', gptResponse);
+    console.log('GPT Raw Response:', gptResponse);
 
-    const parameters = JSON.parse(gptResponse);
-    message.parameters = parameters;
+    let parameters;
+    try {
+      parameters = JSON.parse(gptResponse);
+      console.log('Parsed Parameters:', parameters);
+    } catch (error) {
+      console.error('Failed to parse GPT response:', error);
+      throw new Error('Invalid GPT response format');
+    }
+
+    message.parameters = parameters || {};
     await message.save();
 
     console.log('Message with parameters saved to DB.');
@@ -137,3 +145,4 @@ const transcribeFileWithWhisper = async (filePath: string) => {
     throw new Error('Error during transcription or DB save');
   }
 };
+

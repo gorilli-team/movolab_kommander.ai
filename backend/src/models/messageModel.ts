@@ -19,15 +19,19 @@ const MessageSchema: Schema = new Schema(
     parameters: {
       type: new Schema(
         {
-          pickUpDate: { type: Date, required: false },
-          dropOffDate: { type: Date, required: false },
-          driver_name: { type: String, required: false },
-          customer_name: { type: String, required: false },
-          driver_phone: { type: String, required: false },
-          customer_phone: { type: String, required: false },
-          group: { type: [String], default: ["CITY CAR"] },
-          workflow: { type: String, default: "Flusso standard per i tuoi clienti" },
-          rental_location: { type: String, default: "Tarvisio 8" },
+          pickUpDate: { type: Date},  
+          dropOffDate: { type: Date}, 
+          driver_name: { type: String}, 
+          customer_name: { type: String},
+          driver_phone: { type: String},
+          customer_phone: { type: String},
+          group: [{ type: Schema.Types.ObjectId, ref: 'Group'}],
+          workflow: [{ type: Schema.Types.ObjectId, ref: 'Workflow'}],
+          pickupLocation: { type: Schema.Types.ObjectId, ref: 'Location'},
+          dropOffLocation: { type: Schema.Types.ObjectId, ref: 'Location'},
+          movementType: [{ type: Schema.Types.ObjectId, ref: 'Movement'}],
+          initiator: { type: String, default: "dashboard" },
+          priceList: { type: String, default: null }
         },
         { _id: false }
       ),
