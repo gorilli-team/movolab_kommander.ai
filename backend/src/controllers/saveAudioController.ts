@@ -9,6 +9,7 @@ import FormData from 'form-data';
 import dotenv from 'dotenv';
 import Message from '../models/messageModel';
 import { callChatGpt } from './chatGptController'; 
+import { getAvailableVehicles } from './movolabController';
 
 dotenv.config();
 
@@ -112,7 +113,6 @@ const transcribeFileWithWhisper = async (filePath: string) => {
     const transcription = response.data.text;
     console.log('Transcription result:', transcription);
 
-    
     const message = new Message({
       message_text: transcription,
       message_type: 'audio',
@@ -125,16 +125,33 @@ const transcribeFileWithWhisper = async (filePath: string) => {
     const gptResponse = await callChatGpt(transcription);
     console.log('ChatGPT Analysis Result:', gptResponse);
 
-    const parameters = gptResponse;
+    message.parameters = gptResponse;
 
-    message.parameters = parameters;
     await message.save();
 
-    console.log('Message with parameters saved to DB.');
+    const { pickUpDate, dropOffDate, pickUpLocation, dropOffLocation, group, movementType, workflow } = gptResponse;
 
+    const sessionCookie = process.env.MOVOLAB_SESSION_COOKIE;
+
+    if (!sessionCookie) {
+      throw new Error('MOVOLAB_SESSION_COOKIE is not set in the environment');
+    }
+
+    const availableVehicles = await getAvailableVehicles({
+      pickUpDate,
+      dropOffDate,
+      pickUpLocation,
+      dropOffLocation,
+      group,
+      movementType,
+      workflow,
+    }, sessionCookie);
+
+    console.log("Available vehicles: ", availableVehicles);
     return transcription;
   } catch (error) {
     console.error('Error during transcription or DB save:', error);
     throw new Error('Error during transcription or DB save');
   }
 };
+
