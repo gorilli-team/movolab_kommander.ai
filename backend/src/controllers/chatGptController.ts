@@ -87,7 +87,7 @@ export const callChatGpt = async (text: string): Promise<any> => {
       "movement_type": {
         "_id": " ",
         "name": "Noleggio",
-        "enum": "NOL",
+        "enum": "NOL"
       }
     }`;
 
@@ -108,12 +108,27 @@ export const callChatGpt = async (text: string): Promise<any> => {
       }
     );
 
-    const reply = response.data.choices[0].message.content;
-    return JSON.parse(reply);
+    const rawReply = response.data.choices[0].message.content;
 
-  } catch (error) {
-    console.error('Error in ChatGPT call:', error);
-    throw new Error('Failed to fetch response from ChatGPT.');
+    console.log('Raw ChatGPT Response:', rawReply);
+
+    const sanitizedReply = rawReply.replace(/,\s*([}\]])/g, '$1').trim();
+
+    console.log('Sanitized JSON:', sanitizedReply);
+
+    let parsedReply;
+    try {
+      parsedReply = JSON.parse(sanitizedReply);
+    } catch (error:any) {
+      console.error('Errore di parsing JSON:', error.message);
+      throw new Error('Il JSON restituito da ChatGPT non è valido.');
+    }
+
+    console.log('Parsed Response:', parsedReply);
+    return parsedReply;
+
+  } catch (error:any) {
+    console.error('Errore nella chiamata a ChatGPT:', error.message);
+    throw new Error('Errore nella chiamata a ChatGPT. Controlla i log.');
   }
 };
-

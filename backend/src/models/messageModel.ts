@@ -9,8 +9,8 @@ export interface Message extends Document {
   message_type: 'audio' | 'text';
   user_id: mongoose.Types.ObjectId;
   parameters?: {
-    pickUpDate?: Date;
-    dropOffDate?: Date;
+    pickUpDate?: string;
+    dropOffDate?: string;
     driver_name?: string;
     customer_name?: string;
     driver_phone?: string;
@@ -33,8 +33,8 @@ const MessageSchema: Schema = new Schema(
     parameters: {
       type: new Schema(
         {
-          pickUpDate: { type: Date },
-          dropOffDate: { type: Date },
+          pickUpDate: { type: String },
+          dropOffDate: { type: String },
           driver_name: { type: String },
           customer_name: { type: String },
           driver_phone: { type: String },
