@@ -9,16 +9,16 @@ export interface Message extends Document {
   message_type: 'audio' | 'text';
   user_id: mongoose.Types.ObjectId;
   parameters?: {
-    pickUpDate?: string;
-    dropOffDate?: string;
+    pickup_date?: Date;
+    dropoff_date?: Date;
+    pickUpLocation?: Location; 
+    dropOffLocation?: Location;
     driver_name?: string;
     customer_name?: string;
     driver_phone?: string;
     customer_phone?: string;
     group?: Group[]; 
     workflow?: Workflow; 
-    pickUpLocation?: Location; 
-    dropOffLocation?: Location;
     movement_type?: Movement;
     initiator?: string;
     priceList?: string;
@@ -33,8 +33,8 @@ const MessageSchema: Schema = new Schema(
     parameters: {
       type: new Schema(
         {
-          pickUpDate: { type: String },
-          dropOffDate: { type: String },
+          pickup_date: { type: Date },
+          dropoff_date: { type: Date },
           driver_name: { type: String },
           customer_name: { type: String },
           driver_phone: { type: String },

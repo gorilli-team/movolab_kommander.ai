@@ -63,8 +63,8 @@ export const callChatGpt = async (text: string): Promise<any> => {
     Rispondi in formato JSON come nell'esempio qui sotto:
     
     {
-      "pickup_date": "2024-12-07T17:13", 
-      "dropoff_date": "2024-12-08T16:16", 
+      "pickup_date": "2024-12-07T17:13",
+      "dropoff_date": "2024-12-08T16:16",
       "driver_name": "Mario Rossi",
       "customer_name": "Giovanni Verdi",
       "driver_phone": "+39 012 345 6789",
@@ -111,6 +111,7 @@ export const callChatGpt = async (text: string): Promise<any> => {
     const rawReply = response.data.choices[0].message.content;
 
     console.log('Raw ChatGPT Response:', rawReply);
+
 
     const sanitizedReply = rawReply.replace(/,\s*([}\]])/g, '$1').trim();
 

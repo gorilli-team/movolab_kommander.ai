@@ -126,6 +126,7 @@ const transcribeFileWithWhisper = async (filePath: string) => {
     console.log('ChatGPT Analysis Result:', gptResponse);
 
     const parameters = gptResponse;
+
     message.parameters = parameters;
     await message.save();
 

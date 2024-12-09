@@ -22,14 +22,11 @@ export const createMessage = async (req: Request, res: Response) => {
       user_id,
     });
 
-    await message.save();
-
     console.log('Calling ChatGPT for analysis...');
     const gptResponse = await callChatGpt(message_text);
     console.log('GPT Response:', gptResponse);
 
     message.parameters = gptResponse;
-
     await message.save();
 
     res.status(201).json(message);
@@ -40,4 +37,5 @@ export const createMessage = async (req: Request, res: Response) => {
     res.status(400).json({ error: errorMessage });
   }
 };
+
 
