@@ -1,6 +1,10 @@
 import { Request, Response } from 'express';
 import Message from '../models/messageModel';
 import { callChatGpt } from './chatGptController';
+import { getAvailableVehicles } from './movolabController';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export const getMessages = async (req: Request, res: Response) => {
   try {
@@ -22,14 +26,40 @@ export const createMessage = async (req: Request, res: Response) => {
       user_id,
     });
 
+
+    console.log('Message saved successfully');
+
     console.log('Calling ChatGPT for analysis...');
     const gptResponse = await callChatGpt(message_text);
     console.log('GPT Response:', gptResponse);
 
+
     message.parameters = gptResponse;
+
     await message.save();
 
+    const { pickUpDate, dropOffDate, pickUpLocation, dropOffLocation, group, movementType, workflow } = gptResponse;
+
+    const sessionCookie = process.env.MOVOLAB_SESSION_COOKIE;
+
+    if (!sessionCookie) {
+      throw new Error('MOVOLAB_SESSION_COOKIE non definito nell\'env');
+    }
+
+    const availableVehicles = await getAvailableVehicles({
+      pickUpDate,
+      dropOffDate,
+      pickUpLocation,
+      dropOffLocation,
+      group,
+      movementType,
+      workflow,
+    }, sessionCookie);
+
+    console.log("Veicoli disponibili: ", availableVehicles);
+
     res.status(201).json(message);
+
   } catch (error) {
     console.error('Error during message creation:', error);
     const errorMessage =
@@ -37,5 +67,3 @@ export const createMessage = async (req: Request, res: Response) => {
     res.status(400).json({ error: errorMessage });
   }
 };
-
-

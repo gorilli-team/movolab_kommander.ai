@@ -48,7 +48,7 @@ export const callChatGpt = async (text: string): Promise<any> => {
     4. Il nome del cliente.
     5. Il numero di telefono del conducente.
     6. Il numero di telefono del cliente.
-    7. Il gruppo di veicoli (id, mnemonic, description). Tendenzialmente il gruppo è rappresentato dal tipo di veicolo.
+    7. Il gruppo di veicoli (id, mnemonic, description). Tendenzialmente il gruppo è rappresentato dal tipo di veicolo. Puoi anche scegliere tutti i gruppi quindi devi prenderli tutti.
     8. Il workflow (id, nome).
     9. PickUpLocation (id, nome), è legato a rental location.
     10. DropOffLocation (id, nome), è legato a rental location.
@@ -63,8 +63,8 @@ export const callChatGpt = async (text: string): Promise<any> => {
     Rispondi in formato JSON come nell'esempio qui sotto:
     
     {
-      "pickup_date": "2024-12-07T17:13",
-      "dropoff_date": "2024-12-08T16:16",
+      "pickUpDate": "2024-12-07T17:13",
+      "dropOffDate": "2024-12-08T16:16",
       "driver_name": "Mario Rossi",
       "customer_name": "Giovanni Verdi",
       "driver_phone": "+39 012 345 6789",
@@ -84,7 +84,7 @@ export const callChatGpt = async (text: string): Promise<any> => {
         "_id": "66eb13cb072e8e794505bcaf",
         "name": "Tarvisio 8"
       },
-      "movement_type": {
+      "movementType": {
         "_id": " ",
         "name": "Noleggio",
         "enum": "NOL"

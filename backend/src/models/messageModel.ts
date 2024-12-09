@@ -9,8 +9,8 @@ export interface Message extends Document {
   message_type: 'audio' | 'text';
   user_id: mongoose.Types.ObjectId;
   parameters?: {
-    pickup_date?: Date;
-    dropoff_date?: Date;
+    pickUpDate?: Date;
+    dropOffDate?: Date;
     pickUpLocation?: Location; 
     dropOffLocation?: Location;
     driver_name?: string;
@@ -19,7 +19,7 @@ export interface Message extends Document {
     customer_phone?: string;
     group?: Group[]; 
     workflow?: Workflow; 
-    movement_type?: Movement;
+    movementType?: Movement;
     initiator?: string;
     priceList?: string;
   };
@@ -33,8 +33,8 @@ const MessageSchema: Schema = new Schema(
     parameters: {
       type: new Schema(
         {
-          pickup_date: { type: Date },
-          dropoff_date: { type: Date },
+          pickUpDate: { type: Date },
+          dropOffDate: { type: Date },
           driver_name: { type: String },
           customer_name: { type: String },
           driver_phone: { type: String },
@@ -58,7 +58,7 @@ const MessageSchema: Schema = new Schema(
             _id: { type: Schema.Types.ObjectId, ref: 'Location' },
             name: {type: String},
           }, 
-          movement_type: {
+          movementType: {
             _id: { type: Schema.Types.ObjectId, ref: 'Movement' },
             enum: { type: String },
             name: { type: String },
