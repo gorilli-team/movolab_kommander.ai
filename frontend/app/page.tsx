@@ -123,6 +123,9 @@ export default function Home() {
           </div>
         </div>
       </Banner>
+      <div>
+
+      </div>
       <div className="mt-8">
         {inputMethod === "text" && (
           <TextMessage
@@ -138,8 +141,9 @@ export default function Home() {
 
       {isLoading && (
         <div className="mt-4 flex items-center justify-center">
-          <Spinner aria-label="Loading spinner" size="lg" />
+          <Spinner color="info" aria-label="Loading spinner" size="lg" />
         </div>
+
       )}
 
       {requestStatus && (
@@ -154,7 +158,7 @@ export default function Home() {
         </div>
       )}
        <div className="mt-8 container-custom">
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-6 mb-8">
           {vehicles.map((vehicle, index) => (
             <VehicleCard key={index} vehicle={vehicle} />
           ))}
