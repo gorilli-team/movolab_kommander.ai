@@ -1,8 +1,8 @@
-import express, { Request, Response, NextFunction } from 'express';  // Importa anche NextFunction per la gestione degli errori
+import express, { Request, Response, NextFunction } from 'express'; 
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import { uploadAudio } from './controllers/saveAudioController';
-import { getMessages, createMessage } from './controllers/messageController';
+import { getMessages, createMessage} from './controllers/messageController';
 
 const app = express();
 
@@ -28,7 +28,6 @@ app.post('/new_message', async (req: Request, res: Response, next: NextFunction)
     next(error);
   }
 });
-
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err); 

@@ -110,12 +110,11 @@ export const callChatGpt = async (text: string): Promise<any> => {
 
     const rawReply = response.data.choices[0].message.content;
 
-    console.log('Raw ChatGPT Response:', rawReply);
 
 
     const sanitizedReply = rawReply.replace(/,\s*([}\]])/g, '$1').trim();
 
-    console.log('Sanitized JSON:', sanitizedReply);
+    
 
     let parsedReply;
     try {
@@ -125,7 +124,6 @@ export const callChatGpt = async (text: string): Promise<any> => {
       throw new Error('Il JSON restituito da ChatGPT non è valido.');
     }
 
-    console.log('Parsed Response:', parsedReply);
     return parsedReply;
 
   } catch (error:any) {

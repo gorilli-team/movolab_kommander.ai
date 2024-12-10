@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           integrity="sha512-5Hs3dF2AEPkpNAR7UiOHba+lRSJNeM2ECkwxUIxC1Q/FLycGTbNapWXB4tP889k5T5Ju8fs4b1P5z/iB4nMfSQ==" 
           crossOrigin="anonymous" 
         />
-        <link 
+        <link
           rel="preconnect" 
           href="https://fonts.googleapis.com" 
           crossOrigin="anonymous" 
@@ -29,8 +29,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        {children}
+          {children}
+
       </body>
     </html>
   );
 }
+

@@ -4,14 +4,17 @@ import React, { useState } from "react";
 import { Banner, Button, Spinner } from "flowbite-react";
 import AudioMessage from "./_components/AudioMessage";
 import TextMessage from "./_components/TextMessage";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import VehicleCard from "./_components/vehicleCard";
 
 export default function Home() {
   const [inputMethod, setInputMethod] = useState<"text" | "audio" | null>(null);
-  const [message, setMessage] = useState<string>("");
+  const [message, setMessage] = useState<string>(""); 
   const [audioFile, setAudioFile] = useState<Blob | null>(null);
   const [isLoading, setIsLoading] = useState(false); 
   const [requestStatus, setRequestStatus] = useState<string | null>(null);
+  const [vehicles, setVehicles] = useState<any[]>([]);
+  const router = useRouter();
 
   const userId = "64b60e4c3c3a1b0f12345678";
 
@@ -44,6 +47,14 @@ export default function Home() {
           console.log("Message saved:", result);
           setMessage("");
           setRequestStatus("success");
+
+          const availableVehicles = result.availableVehicles.result;
+          setVehicles(availableVehicles);
+
+
+          // if (typeof window !== "undefined") {
+          //   router.push("/veicoli");
+          // }
         } else {
           console.error("Error while saving the message:", await response.json());
           setRequestStatus("error");
@@ -61,6 +72,13 @@ export default function Home() {
           const result = await response.json();
           console.log("Audio uploaded:", result);
           setRequestStatus("success");
+
+          const availableVehicles = result.availableVehicles.result;
+          setVehicles(availableVehicles);
+
+          // if (typeof window !== "undefined") {
+          //   router.push("/veicoli");
+          // }
         } else {
           console.error("Error while uploading the audio:", await response.json());
           setRequestStatus("error");
@@ -135,12 +153,13 @@ export default function Home() {
             : "Errore durante la richiesta."}
         </div>
       )}
-      <div className="mt-8">
-        <Link color="light" href="/veicoli">
-          Vedi veicoli disponibili
-        </Link>
+
+      {/* Mostra le card dei veicoli */}
+      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {vehicles.map((vehicle, index:any) => (
+          <VehicleCard key={index} vehicle={vehicle} />
+        ))}
       </div>
     </div>
-    
   );
 }

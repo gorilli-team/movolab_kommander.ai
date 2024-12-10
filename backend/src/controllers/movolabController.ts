@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const getAvailableVehicles = async (params: any, sessionCookie: string): Promise<any> => {
+export const movolabAvailableVehicles = async (params: any, sessionCookie: string): Promise<any> => {
   try {
     const { dropOffDate, dropOffLocation, group, movementType, pickUpDate, pickUpLocation, workflow  } = params;
 
@@ -33,7 +33,6 @@ export const getAvailableVehicles = async (params: any, sessionCookie: string): 
 
     const availableVehicles = response.data;
 
-    console.log('Veicoli Disponibili:', availableVehicles);
     return availableVehicles;
 
   } catch (error: any) {
@@ -41,3 +40,4 @@ export const getAvailableVehicles = async (params: any, sessionCookie: string): 
     throw new Error('Impossibile recuperare i veicoli disponibili. Controlla i log.');
   }
 };
+

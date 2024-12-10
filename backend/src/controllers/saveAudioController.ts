@@ -9,7 +9,7 @@ import FormData from 'form-data';
 import dotenv from 'dotenv';
 import Message from '../models/messageModel';
 import { callChatGpt } from './chatGptController'; 
-import { getAvailableVehicles } from './movolabController';
+import { movolabAvailableVehicles } from './movolabController';
 
 dotenv.config();
 
@@ -56,6 +56,15 @@ export const uploadAudio = (req: Request, res: Response, next: NextFunction) => 
 
     const uploadedFilePath = path.join(uploadsDirectory, req.file.filename);
 
+    let responseSent = false;
+
+    const sendResponse = (status: number, message: string, data?: any) => {
+      if (!responseSent) {
+        responseSent = true;
+        res.status(status).json({ message, ...data });
+      }
+    };
+
     if (path.extname(uploadedFilePath) === '.wav') {
       const outputFilePath = path.join(uploadsDirectory, Date.now() + '.mp3');
 
@@ -65,31 +74,22 @@ export const uploadAudio = (req: Request, res: Response, next: NextFunction) => 
         .on('end', async () => {
           fs.unlinkSync(uploadedFilePath);
           try {
-            await transcribeFileWithWhisper(outputFilePath);
-            res.status(200).json({
-              message: 'Audio file uploaded, converted, and transcribed successfully',
-              filename: path.basename(outputFilePath),
-            });
-          } catch (err) {
-            const errorMessage = (err instanceof Error) ? err.message : 'Unknown error occurred';
-            res.status(500).json({ message: 'Error during transcription', error: errorMessage });
+            await transcribeFileWithWhisper(outputFilePath, res, sendResponse);
+            sendResponse(200, 'Audio file uploaded, converted, and transcribed successfully', { filename: path.basename(outputFilePath) });
+          } catch (err:any) {
+            sendResponse(500, 'Error during transcription', { error: err.message || 'Unknown error occurred' });
           }
         })
         .on('error', (err: any) => {
-          const errorMessage = (err instanceof Error) ? err.message : 'Unknown error occurred';
-          res.status(500).json({ message: 'Error during file conversion', error: errorMessage });
+          sendResponse(500, 'Error during file conversion', { error: err.message || 'Unknown error occurred' });
         })
         .run();
     } else {
       try {
-        await transcribeFileWithWhisper(uploadedFilePath);
-        res.status(200).json({
-          message: 'Audio file uploaded and transcribed successfully',
-          filename: req.file.filename,
-        });
-      } catch (err) {
-        const errorMessage = (err instanceof Error) ? err.message : 'Unknown error occurred';
-        res.status(500).json({ message: 'Error during transcription', error: errorMessage });
+        await transcribeFileWithWhisper(uploadedFilePath, res, sendResponse);
+        sendResponse(200, 'Audio file uploaded and transcribed successfully', { filename: req.file.filename });
+      } catch (err:any) {
+        sendResponse(500, 'Error during transcription', { error: err.message || 'Unknown error occurred' });
       }
     }
   });
@@ -97,7 +97,7 @@ export const uploadAudio = (req: Request, res: Response, next: NextFunction) => 
 
 const userId = "64b60e4c3c3a1b0f12345678";
 
-const transcribeFileWithWhisper = async (filePath: string) => {
+const transcribeFileWithWhisper = async (filePath: string, res: Response, sendResponse: Function) => {
   try {
     const formData = new FormData();
     formData.append('file', fs.createReadStream(filePath));
@@ -137,7 +137,7 @@ const transcribeFileWithWhisper = async (filePath: string) => {
       throw new Error('MOVOLAB_SESSION_COOKIE is not set in the environment');
     }
 
-    const availableVehicles = await getAvailableVehicles({
+    const availableVehicles = await movolabAvailableVehicles({
       pickUpDate,
       dropOffDate,
       pickUpLocation,
@@ -148,10 +148,12 @@ const transcribeFileWithWhisper = async (filePath: string) => {
     }, sessionCookie);
 
     console.log("Available vehicles: ", availableVehicles);
+
+    sendResponse(201, 'Messaggio creato con successo', { createdMessage: message, availableVehicles });
+
     return transcription;
   } catch (error) {
     console.error('Error during transcription or DB save:', error);
     throw new Error('Error during transcription or DB save');
   }
 };
-
