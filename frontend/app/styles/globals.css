@@ -55,3 +55,6 @@ canvas.sound-wave{
   height: 80px;
 }
 
+.container-custom{
+   max-width: 900px;
+}

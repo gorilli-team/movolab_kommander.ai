@@ -20,7 +20,7 @@ const TextMessage: React.FC<TextMessageProps> = ({ value, onChange, onSubmit }) 
           id="comment"
           placeholder="Scrivi qui la tua richiesta..."
           required
-          rows={1}
+          rows={6}
           cols={120}
           className="p-4"
           value={value}
