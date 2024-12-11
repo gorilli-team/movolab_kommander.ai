@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { Banner, Button, Spinner } from "flowbite-react";
 import AudioMessage from "./_components/AudioMessage";
 import TextMessage from "./_components/TextMessage";
-// import { useRouter } from "next/navigation";
 import VehicleCard from "./_components/vehicleCard";
 
 export default function Home() {
@@ -14,8 +13,8 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false); 
   const [requestStatus, setRequestStatus] = useState<string | null>(null);
   const [vehicles, setVehicles] = useState<any[]>([]);
-  // const router = useRouter();
-
+  const [showResults, setShowResults] = useState(true); 
+  
   const userId = "64b60e4c3c3a1b0f12345678";
 
   const handleIconClick = (method: "text" | "audio") => {
@@ -50,11 +49,6 @@ export default function Home() {
 
           const availableVehicles = result.availableVehicles.result;
           setVehicles(availableVehicles);
-
-
-          // if (typeof window !== "undefined") {
-          //   router.push("/veicoli");
-          // }
         } else {
           console.error("Error while saving the message:", await response.json());
           setRequestStatus("error");
@@ -75,10 +69,6 @@ export default function Home() {
 
           const availableVehicles = result.availableVehicles.result;
           setVehicles(availableVehicles);
-
-          // if (typeof window !== "undefined") {
-          //   router.push("/veicoli");
-          // }
         } else {
           console.error("Error while uploading the audio:", await response.json());
           setRequestStatus("error");
@@ -92,8 +82,13 @@ export default function Home() {
     }
   };
 
+
+  const handleSearchAnotherVehicle = () => {
+    setShowResults(false);
+  };
+
   return (
-    <div className="flex flex-col w-full h-screen items-center home-page">
+    <div className="overflow-auto flex flex-col w-full h-screen items-center home-page">
       <Banner>
         <div className="banner-custom flex w-full items-center justify-between border-b border-gray-200 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700">
           <h2 className="font-bold">Cosa vuoi fare?</h2>
@@ -123,9 +118,6 @@ export default function Home() {
           </div>
         </div>
       </Banner>
-      <div>
-
-      </div>
       <div className="mt-8">
         {inputMethod === "text" && (
           <TextMessage
@@ -143,7 +135,6 @@ export default function Home() {
         <div className="mt-4 flex items-center justify-center">
           <Spinner color="info" aria-label="Loading spinner" size="lg" />
         </div>
-
       )}
 
       {requestStatus && (
@@ -157,13 +148,30 @@ export default function Home() {
             : "Errore durante la richiesta."}
         </div>
       )}
-       <div className="mt-8 container-custom">
-        <div className="grid grid-cols-3 gap-6 mb-8">
-          {vehicles.map((vehicle, index) => (
-            <VehicleCard key={index} vehicle={vehicle} />
-          ))}
-        </div>
+
+{showResults && requestStatus === "success" && (
+  <>
+    <div className="mt-8 container-custom">
+      <div className="grid grid-cols-3 gap-6 mb-8">
+        {vehicles.map((vehicle, index) => (
+          <VehicleCard key={index} vehicle={vehicle} />
+        ))}
       </div>
     </div>
+    <div className="mt-4 mb-8"> 
+      <Button
+        color="blue"
+        className="w-full"
+        onClick={handleSearchAnotherVehicle}
+      >
+        Cerca un altro veicolo
+      </Button>
+    </div>
+  </>
+)}
+
+<div className="mt-4 h-20 bg-transparent"></div> 
+
+  </div>
   );
 }
