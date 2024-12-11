@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const movolabAvailableVehicles = async (params: any, sessionCookie: string): Promise<any> => {
+export const movolabAvailableVehicles = async (params: any, authToken: string): Promise<any> => {
   try {
     const { dropOffDate, dropOffLocation, group, movementType, pickUpDate, pickUpLocation, workflow  } = params;
 
@@ -21,12 +21,12 @@ export const movolabAvailableVehicles = async (params: any, sessionCookie: strin
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${sessionCookie}`,
+        'Authorization': `Bearer ${authToken}`,
       },
     };
 
     const response = await axios.post(
-      'https://movolab-backend-demo-9a535b77af26.herokuapp.com/rents/availability/getAvailSimple',
+      'https://movolab-backend.herokuapp.com/rents/availability/getAvailSimple',
       requestBody,
       config
     );

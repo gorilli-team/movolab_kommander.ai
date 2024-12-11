@@ -8,28 +8,28 @@ import VehicleCard from "./_components/vehicleCard";
 
 export default function Home() {
   const [inputMethod, setInputMethod] = useState<"text" | "audio" | null>(null);
-  const [message, setMessage] = useState<string>(""); 
+  const [message, setMessage] = useState<string>("");
   const [audioFile, setAudioFile] = useState<Blob | null>(null);
-  const [isLoading, setIsLoading] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
   const [requestStatus, setRequestStatus] = useState<string | null>(null);
   const [vehicles, setVehicles] = useState<any[]>([]);
-  const [showResults, setShowResults] = useState(true); 
-  
+
   const userId = "64b60e4c3c3a1b0f12345678";
 
   const handleIconClick = (method: "text" | "audio") => {
     setInputMethod(method);
-    setRequestStatus(null); 
+    setRequestStatus(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true); 
-    setRequestStatus(null); 
+    setIsLoading(true);
+    setRequestStatus(null);
 
     try {
+      let response;
       if (inputMethod === "text") {
-        const response = await fetch("http://localhost:5000/new_message", {
+        response = await fetch("http://localhost:5000/new_message", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -40,52 +40,41 @@ export default function Home() {
             user_id: userId,
           }),
         });
-
-        if (response.ok) {
-          const result = await response.json();
-          console.log("Message saved:", result);
-          setMessage("");
-          setRequestStatus("success");
-
-          const availableVehicles = result.availableVehicles.result;
-          setVehicles(availableVehicles);
-        } else {
-          console.error("Error while saving the message:", await response.json());
-          setRequestStatus("error");
-        }
       } else if (inputMethod === "audio" && audioFile) {
         const formData = new FormData();
         formData.append("audio", audioFile, "audioMessage.wav");
 
-        const response = await fetch("http://localhost:5000/upload-audio", {
+        response = await fetch("http://localhost:5000/upload-audio", {
           method: "POST",
           body: formData,
         });
+      }
 
-        if (response.ok) {
-          const result = await response.json();
-          console.log("Audio uploaded:", result);
-          setRequestStatus("success");
+      if (response?.ok) {
+        const result = await response.json();
+        console.log("Request succeeded:", result);
 
-          const availableVehicles = result.availableVehicles.result;
-          setVehicles(availableVehicles);
-        } else {
-          console.error("Error while uploading the audio:", await response.json());
-          setRequestStatus("error");
-        }
+
+        const availableVehicles = result?.availableVehicles?.result || [];
+        setVehicles(Array.isArray(availableVehicles) ? availableVehicles : []);
+
+        availableVehicles.forEach((vehicle: any) => {
+          console.log("Targa del veicolo:", vehicle.plate);
+        });
+
+        setRequestStatus("success");
+      } else {
+        console.error("Error in response:", await response?.json());
+        setRequestStatus("error");
       }
     } catch (error) {
       console.error("Connection error:", error);
       setRequestStatus("error");
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   };
 
-
-  const handleSearchAnotherVehicle = () => {
-    setShowResults(false);
-  };
 
   return (
     <div className="overflow-auto flex flex-col w-full h-screen items-center home-page">
@@ -132,7 +121,7 @@ export default function Home() {
       </div>
 
       {isLoading && (
-        <div className="mt-4 flex items-center justify-center">
+        <div className="mt-6 flex items-center justify-center">
           <Spinner color="info" aria-label="Loading spinner" size="lg" />
         </div>
       )}
@@ -148,30 +137,6 @@ export default function Home() {
             : "Errore durante la richiesta."}
         </div>
       )}
-
-{showResults && requestStatus === "success" && (
-  <>
-    <div className="mt-8 container-custom">
-      <div className="grid grid-cols-3 gap-6 mb-8">
-        {vehicles.map((vehicle, index) => (
-          <VehicleCard key={index} vehicle={vehicle} />
-        ))}
-      </div>
     </div>
-    <div className="mt-4 mb-8"> 
-      <Button
-        color="blue"
-        className="w-full"
-        onClick={handleSearchAnotherVehicle}
-      >
-        Cerca un altro veicolo
-      </Button>
-    </div>
-  </>
-)}
-
-<div className="mt-4 h-20 bg-transparent"></div> 
-
-  </div>
   );
 }

@@ -38,10 +38,10 @@ export const createMessage = async (req: Request, res: Response) => {
 
     const { pickUpDate, dropOffDate, pickUpLocation, dropOffLocation, group, movementType, workflow } = gptResponse;
 
-    const sessionCookie = process.env.MOVOLAB_SESSION_COOKIE;
+    const authToken = process.env.MOVOLAB_AUTH_TOKEN;
 
-    if (!sessionCookie) {
-      throw new Error('MOVOLAB_SESSION_COOKIE non definito nell\'env');
+    if (!authToken) {
+      throw new Error('MOVOLAB_AUTH_TOKEN non definito nell\'env');
     }
 
     const availableVehicles = await movolabAvailableVehicles({
@@ -52,7 +52,7 @@ export const createMessage = async (req: Request, res: Response) => {
       group,
       movementType,
       workflow,
-    }, sessionCookie);
+    }, authToken);
 
     console.log("Veicoli disponibili: ", availableVehicles);
 

@@ -25,12 +25,16 @@ export const callChatGpt = async (text: string): Promise<any> => {
         { "_id": "63acb34cacaff598c55087a5", "mnemonic": "Z", "description": "COMMERCIALI" }
       ],
       "workflows": [
-        { "_id": "670a8d3937df135b0265aaf4", "name": "Prepagato Prenotazione" },
-        { "_id": "66eacccc93853d73a4043fbe", "name": "Auto sostitutiva" },
-        { "_id": "66eacccc93853d73a4043fbc", "name": "I tuoi clienti" }
+        { "_id": "66f2920c3364651640195666", "name": "Solo Cassala"},
+        { "_id": "66f291e73364651640193481", "name": "Solo Tarvisio"},
+        { "_id": "66ea8f3c25372c22acea62b2", "name": "I tuoi clienti"},
+        { "_id": "670a245fa3125360eead5b12", "name": "Prepagato Apertura Movo"},
+        { "_id": "670a2413a3125360eead413f", "name": "Prepagato Prenotazione"},
+        { "_id": "66ea8f3c25372c22acea62b4", "name": "Auto sostitutiva"}
       ],
       "rental_location": [
-        { "_id": "66eb13cb072e8e794505bcaf", "name": "Tarvisio 8" }
+        { "_id": "66f1d24c27e100b4a9e4d4b6", "name": "Rossi Noleggi Viale Cassala"},
+        { "_id": "66ea9ae39d53a10b66934fca","name": "Rossi Noleggi Tarvisio"}
       ],
      "movement_types": [
         { "_id": "670a8d3937df135b0265aaf5", "enum": "NOL", "name": "Noleggio" },

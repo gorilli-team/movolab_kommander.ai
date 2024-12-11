@@ -112,7 +112,7 @@ const AudioMessage: React.FC<AudioMessageProps> = ({ setAudioFile }) => {
 
       {isLoading && (
         <div className="mt-4">
-          <Spinner aria-label="Loading spinner" size="lg" />
+          <Spinner color="info" aria-label="Loading spinner" size="lg" />
         </div>
       )}
 
