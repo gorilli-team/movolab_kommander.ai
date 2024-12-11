@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ReactMic } from "react-mic";
+import { useReactMediaRecorder } from "react-media-recorder";
 import { Button, Spinner } from "flowbite-react";
 
 interface AudioMessageProps {
@@ -9,36 +9,19 @@ interface AudioMessageProps {
 }
 
 const AudioMessage: React.FC<AudioMessageProps> = ({ setAudioFile }) => {
-  const [isRecording, setIsRecording] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [showRecorder, setShowRecorder] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [requestStatus, setRequestStatus] = useState<string | null>(null);
 
-  const handleStartRecording = () => {
-    setIsRecording(true);
-  };
-
-  const handleStopRecording = () => {
-    setIsRecording(false);
-  };
-
-  const onData = (recordedData: any) => {
-    console.log("Recording in progress:", recordedData);
-  };
-
-  const onStop = (recordedData: any) => {
-    console.log("Recording stopped. Audio data:", recordedData);
-    setRecordedBlob(recordedData.blob);
-    setAudioFile(recordedData.blob);
-    setShowRecorder(false);
-  };
-
-  const handleRetry = () => {
-    setRecordedBlob(null);
-    setShowRecorder(true);
-    setRequestStatus(null);
-  };
+  const { status, startRecording, stopRecording, mediaBlobUrl } = useReactMediaRecorder({
+    audio: true,
+    onStop: (blobUrl, blob) => {
+      setRecordedBlob(blob);
+      setAudioFile(blob); 
+      setShowRecorder(false);
+    },
+  });
 
   const handleSubmitAudio = async () => {
     if (!recordedBlob) return;
@@ -70,25 +53,23 @@ const AudioMessage: React.FC<AudioMessageProps> = ({ setAudioFile }) => {
     }
   };
 
+  const handleRetry = () => {
+    setRecordedBlob(null);
+    setShowRecorder(true);
+    setRequestStatus(null);
+  };
+
   return (
     <div className="flex flex-col items-center">
       {showRecorder && (
         <>
-          <ReactMic
-            record={isRecording}
-            className="sound-wave"
-            onStop={onStop}
-            onData={onData}
-            strokeColor="#000000"
-            backgroundColor="#ffffff"
-          />
           <div className="mt-4">
-            {isRecording ? (
-              <Button color="warning" onClick={handleStopRecording}>
+            {status === "recording" ? (
+              <Button color="warning" onClick={stopRecording}>
                 Stop
               </Button>
             ) : (
-              <Button color="success" onClick={handleStartRecording}>
+              <Button color="success" onClick={startRecording}>
                 Registra
               </Button>
             )}
@@ -98,7 +79,7 @@ const AudioMessage: React.FC<AudioMessageProps> = ({ setAudioFile }) => {
 
       {recordedBlob && (
         <div className="mt-4 flex flex-col items-center">
-          <audio controls src={URL.createObjectURL(recordedBlob)} />
+          <audio controls src={mediaBlobUrl || URL.createObjectURL(recordedBlob)} />
           <div className="mt-4 flex space-x-4">
             <Button onClick={handleSubmitAudio} color="gray" disabled={isLoading}>
               Vai

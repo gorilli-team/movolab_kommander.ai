@@ -8,10 +8,11 @@ import axios from 'axios';
 import FormData from 'form-data';
 import dotenv from 'dotenv';
 import Message from '../models/messageModel';
-import { callChatGpt } from './chatGptController'; 
+import { callChatGpt } from './chatGptController';
 import { movolabAvailableVehicles } from './movolabController';
 
 dotenv.config();
+const userId = "64b60e4c3c3a1b0f12345678";
 
 if (ffmpegPath) {
   ffmpeg.setFfmpegPath(ffmpegPath);
@@ -65,95 +66,114 @@ export const uploadAudio = (req: Request, res: Response, next: NextFunction) => 
       }
     };
 
-    if (path.extname(uploadedFilePath) === '.wav') {
-      const outputFilePath = path.join(uploadsDirectory, Date.now() + '.mp3');
-
-      ffmpeg(uploadedFilePath)
-        .output(outputFilePath)
-        .audioCodec('libmp3lame')
-        .on('end', async () => {
-          fs.unlinkSync(uploadedFilePath);
-          try {
-            await transcribeFileWithWhisper(outputFilePath, res, sendResponse);
-            sendResponse(200, 'Audio file uploaded, converted, and transcribed successfully', { filename: path.basename(outputFilePath) });
-          } catch (err:any) {
-            sendResponse(500, 'Error during transcription', { error: err.message || 'Unknown error occurred' });
-          }
-        })
-        .on('error', (err: any) => {
-          sendResponse(500, 'Error during file conversion', { error: err.message || 'Unknown error occurred' });
-        })
-        .run();
-    } else {
-      try {
-        await transcribeFileWithWhisper(uploadedFilePath, res, sendResponse);
-        sendResponse(200, 'Audio file uploaded and transcribed successfully', { filename: req.file.filename });
-      } catch (err:any) {
-        sendResponse(500, 'Error during transcription', { error: err.message || 'Unknown error occurred' });
+    try {
+      if (path.extname(uploadedFilePath) === '.wav') {
+        const outputFilePath = path.join(uploadsDirectory, Date.now() + '.mp3');
+        await convertAudioFile(uploadedFilePath, outputFilePath);
+        await transcribeAndProcessFile(outputFilePath, res, sendResponse);
+      } else {
+        await transcribeAndProcessFile(uploadedFilePath, res, sendResponse);
+      }
+    } catch (err: any) {
+      sendResponse(500, 'Error during processing', { error: err.message || 'Unknown error occurred' });
+    } finally {
+      if (fs.existsSync(uploadedFilePath)) {
+        fs.unlinkSync(uploadedFilePath);
       }
     }
   });
 };
 
-const userId = "64b60e4c3c3a1b0f12345678";
+const convertAudioFile = (inputFilePath: string, outputFilePath: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    ffmpeg(inputFilePath)
+      .output(outputFilePath)
+      .audioCodec('libmp3lame')
+      .on('end', () => {
+        console.log(`Conversion complete: ${inputFilePath} to ${outputFilePath}`);
+        resolve();
+      })
+      .on('error', (err: any) => {
+        reject(new Error(`Error during audio conversion: ${err.message}`));
+      })
+      .run();
+  });
+};
 
-const transcribeFileWithWhisper = async (filePath: string, res: Response, sendResponse: Function) => {
+const transcribeAndProcessFile = async (filePath: string, res: Response, sendResponse: Function) => {
   try {
-    const formData = new FormData();
-    formData.append('file', fs.createReadStream(filePath));
-    formData.append('model', 'whisper-1');
-
-    const response = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-    });
-
-    const transcription = response.data.text;
+    const transcription = await transcribeFileWithWhisper(filePath);
     console.log('Transcription result:', transcription);
 
-    const message = new Message({
-      message_text: transcription,
-      message_type: 'audio',
-      user_id: userId,
-    });
+    const message = await saveTranscriptionToDatabase(transcription);
 
-    await message.save();
-
-    console.log('Calling ChatGPT for analysis...');
     const gptResponse = await callChatGpt(transcription);
     console.log('ChatGPT Analysis Result:', gptResponse);
 
-    message.parameters = gptResponse;
+    await updateMessageWithAnalysis(message, gptResponse);
 
-    await message.save();
-
-    const { pickUpDate, dropOffDate, pickUpLocation, dropOffLocation, group, movementType, workflow } = gptResponse;
-
-    const authToken = process.env.MOVOLAB_AUTH_TOKEN;
-
-    if (!authToken) {
-      throw new Error('MOVOLAB_AUTH_TOKEN is not set in the environment');
-    }
-
-    const availableVehicles = await movolabAvailableVehicles({
-      pickUpDate,
-      dropOffDate,
-      pickUpLocation,
-      dropOffLocation,
-      group,
-      movementType,
-      workflow,
-    }, authToken);
-
+   
+    const availableVehicles = await handleAvailableVehicles(gptResponse);
     console.log("Available vehicles: ", availableVehicles);
 
-    sendResponse(201, 'Messaggio creato con successo', { createdMessage: message, availableVehicles });
 
-    return transcription;
-  } catch (error) {
+    sendResponse(201, 'Message created and processed successfully', {
+      createdMessage: message,
+      availableVehicles: availableVehicles,
+    });
+  } catch (error: any) {
     console.error('Error during transcription or DB save:', error);
-    throw new Error('Error during transcription or DB save');
+    sendResponse(500, 'Error during transcription or DB save', { error: error.message || 'Unknown error occurred' });
   }
+};
+
+const transcribeFileWithWhisper = async (filePath: string): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', fs.createReadStream(filePath));
+  formData.append('model', 'whisper-1');
+
+  const response = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+  });
+
+  return response.data.text;
+};
+
+const saveTranscriptionToDatabase = async (transcription: string) => {
+  const message = new Message({
+    message_text: transcription,
+    message_type: 'audio',
+    user_id: userId,
+  });
+
+  return await message.save();
+};
+
+const updateMessageWithAnalysis = async (message: any, gptResponse: any) => {
+  message.parameters = gptResponse;
+  await message.save();
+};
+
+const handleAvailableVehicles = async (gptResponse: any) => {
+  const { pickUpDate, dropOffDate, pickUpLocation, dropOffLocation, group, movementType, workflow } = gptResponse;
+
+  const authToken = process.env.MOVOLAB_AUTH_TOKEN;
+  if (!authToken) {
+    throw new Error('MOVOLAB_AUTH_TOKEN is not set in the environment');
+  }
+
+  const availableVehicles = await movolabAvailableVehicles({
+    pickUpDate,
+    dropOffDate,
+    pickUpLocation,
+    dropOffLocation,
+    group,
+    movementType,
+    workflow,
+  }, authToken);
+
+  return availableVehicles;  
 };

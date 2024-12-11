@@ -6,13 +6,18 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const handleErrorResponse = (res: Response, error: any, status: number = 500) => {
+  const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+  console.error('Error:', errorMessage);
+  res.status(status).json({ error: errorMessage });
+};
+
 export const getMessages = async (req: Request, res: Response) => {
   try {
     const messages = await Message.find();
     res.json(messages);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-    res.status(500).json({ error: errorMessage });
+    handleErrorResponse(res, error);
   }
 };
 
@@ -26,25 +31,24 @@ export const createMessage = async (req: Request, res: Response) => {
       user_id,
     });
 
-    console.log('Message saved successfully');
+    console.log('Message saved successfully:', message);
 
-    console.log('Calling ChatGPT for analysis...');
     const gptResponse = await callChatGpt(message_text);
     console.log('GPT Response:', gptResponse);
 
     message.parameters = gptResponse;
+
 
     await message.save();
 
     const { pickUpDate, dropOffDate, pickUpLocation, dropOffLocation, group, movementType, workflow } = gptResponse;
 
     const authToken = process.env.MOVOLAB_AUTH_TOKEN;
-
     if (!authToken) {
       throw new Error('MOVOLAB_AUTH_TOKEN non definito nell\'env');
     }
 
-    const availableVehicles = await movolabAvailableVehicles({
+    const availableVehicles = await fetchAvailableVehicles({
       pickUpDate,
       dropOffDate,
       pickUpLocation,
@@ -62,11 +66,16 @@ export const createMessage = async (req: Request, res: Response) => {
       availableVehicles: availableVehicles,
     });
   } catch (error) {
-    console.error('Error during message creation:', error);
-    const errorMessage =
-      error instanceof Error ? error.message : 'An unexpected error occurred';
-    res.status(400).json({ error: errorMessage });
+    handleErrorResponse(res, error, 400);
   }
 };
 
 
+const fetchAvailableVehicles = async (params: any, authToken: string) => {
+  try {
+    const vehicles = await movolabAvailableVehicles(params, authToken);
+    return vehicles;
+  } catch (error:any) {
+    throw new Error('Errore durante la richiesta ai veicoli disponibili: ' + error.message);
+  }
+};
