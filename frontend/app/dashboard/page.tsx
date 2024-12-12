@@ -1,9 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
+import dynamic from "next/dynamic";
 import { Banner, Button, Spinner } from "flowbite-react";
-import AudioMessage from "../_components/AudioMessage";
 import TextMessage from "../_components/TextMessage";
+
+
+const AudioMessage = dynamic(() => import("../_components/AudioMessage"), {
+  ssr: false,
+});
 
 export default function Dashboard() {
   const [inputMethod, setInputMethod] = useState<"text" | "audio" | null>(null);
@@ -53,7 +58,6 @@ export default function Dashboard() {
         const result = await response.json();
         console.log("Request succeeded:", result);
 
-
         const availableVehicles = result?.availableVehicles?.result || [];
         setVehicles(Array.isArray(availableVehicles) ? availableVehicles : []);
 
@@ -73,7 +77,6 @@ export default function Dashboard() {
       setIsLoading(false);
     }
   };
-
 
   return (
     <div className="overflow-auto flex flex-col w-full h-screen items-center page-custom">

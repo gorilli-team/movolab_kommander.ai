@@ -5,20 +5,22 @@ import { Workflow } from './workflowModel';
 import { Group } from './groupModel';
 
 export interface Message extends Document {
+  message_id: mongoose.Types.ObjectId;
+  user_id: mongoose.Types.ObjectId;
+  conversation_id: mongoose.Types.ObjectId;
   message_text: string;
   message_type: 'audio' | 'text';
-  user_id: mongoose.Types.ObjectId;
   parameters?: {
     pickUpDate?: Date;
     dropOffDate?: Date;
-    pickUpLocation?: Location; 
+    pickUpLocation?: Location;
     dropOffLocation?: Location;
     driver_name?: string;
     customer_name?: string;
     driver_phone?: string;
     customer_phone?: string;
-    group?: Group[]; 
-    workflow?: Workflow; 
+    group?: Group[];
+    workflow?: Workflow;
     movementType?: Movement;
     initiator?: string;
     priceList?: string;
@@ -27,9 +29,11 @@ export interface Message extends Document {
 
 const MessageSchema: Schema = new Schema(
   {
+    message_id: { type: Schema.Types.ObjectId, required: true, unique: true },
+    user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    conversation_id: { type: Schema.Types.ObjectId, ref: 'Conversation', required: true },
     message_text: { type: String, required: true },
     message_type: { type: String, enum: ['audio', 'text'], required: true },
-    user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     parameters: {
       type: new Schema(
         {
@@ -52,12 +56,12 @@ const MessageSchema: Schema = new Schema(
           },
           pickUpLocation: {
             _id: { type: Schema.Types.ObjectId, ref: 'Location' },
-            name: {type: String},
-          }, 
+            name: { type: String },
+          },
           dropOffLocation: {
             _id: { type: Schema.Types.ObjectId, ref: 'Location' },
-            name: {type: String},
-          }, 
+            name: { type: String },
+          },
           movementType: {
             _id: { type: Schema.Types.ObjectId, ref: 'Movement' },
             enum: { type: String },
@@ -66,7 +70,7 @@ const MessageSchema: Schema = new Schema(
           initiator: { type: String, default: 'dashboard' },
           priceList: { type: String, default: null },
         },
-        { _id: false } 
+        { _id: false }
       ),
     },
   },
