@@ -44,8 +44,7 @@ export const callChatGpt = async (text: string): Promise<any> => {
     };
     
     const prompt = `
-    Analizza il seguente messaggio del cliente: "${text}"
-    Estrai i seguenti parametri:
+    Analizza il seguente messaggio del cliente: "${text}" ed estrai i seguenti parametri:
     1. La data di presa del veicolo (formato: YYYY-MM-DDTHH:MM).
     2. La data di restituzione del veicolo (formato: YYYY-MM-DDTHH:MM).
     3. Il nome del conducente.
@@ -57,6 +56,8 @@ export const callChatGpt = async (text: string): Promise<any> => {
     9. PickUpLocation (id, nome), è legato a rental location.
     10. DropOffLocation (id, nome), è legato a rental location.
     11. Il tipo di movimento, sicuramente ti verrà indicato il nome e non l'enum. 
+    
+    Se mancano parametri, chiedi all'utente di fornire quelli mancanti. Se non mancano parametri restituisci un messaggio di avvenuta richiesta.
 
     I dati di riferimento sono i seguenti:
     - **Gruppi di veicoli**: ${JSON.stringify(referenceData.groups)}
