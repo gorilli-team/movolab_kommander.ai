@@ -3,11 +3,15 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import { uploadAudio } from './controllers/saveAudioController';
 import { getMessages, createMessage} from './controllers/messageController';
+import { login } from "./controllers/userController";
 
 const app = express();
 
 app.use(bodyParser.json());
 app.use(cors());
+
+
+app.post("/login", login);
 
 
 app.post('/upload-audio', uploadAudio);
@@ -28,6 +32,7 @@ app.post('/new_message', async (req: Request, res: Response, next: NextFunction)
     next(error);
   }
 });
+
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err); 

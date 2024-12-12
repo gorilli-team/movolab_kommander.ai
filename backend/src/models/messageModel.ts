@@ -3,13 +3,15 @@ import { Location } from './locationModel';
 import { Movement } from './movementModel';
 import { Workflow } from './workflowModel';
 import { Group } from './groupModel';
+import { Response } from './responseModel';
 
 export interface Message extends Document {
   message_id: mongoose.Types.ObjectId;
   user_id: mongoose.Types.ObjectId;
-  conversation_id: mongoose.Types.ObjectId;
+//   conversation_id: mongoose.Types.ObjectId;
   message_text: string;
   message_type: 'audio' | 'text';
+  response?: Response;
   parameters?: {
     pickUpDate?: Date;
     dropOffDate?: Date;
@@ -31,9 +33,10 @@ const MessageSchema: Schema = new Schema(
   {
     message_id: { type: Schema.Types.ObjectId, required: true, unique: true },
     user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    conversation_id: { type: Schema.Types.ObjectId, ref: 'Conversation', required: true },
+    // conversation_id: { type: Schema.Types.ObjectId, ref: 'Conversation', required: true },
     message_text: { type: String, required: true },
     message_type: { type: String, enum: ['audio', 'text'], required: true },
+    response: { type: Schema.Types.ObjectId, ref: 'Response' },
     parameters: {
       type: new Schema(
         {

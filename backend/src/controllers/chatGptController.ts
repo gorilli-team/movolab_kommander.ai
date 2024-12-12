@@ -94,7 +94,11 @@ export const callChatGpt = async (text: string): Promise<any> => {
         "name": "Noleggio",
         "enum": "NOL"
       }
-    }`;
+    }
+    
+    Oltre al JSON voglio anche un messaggio al di fuori del JSON che dica "ottimo, la tua richiesta è andata bene", oppure il discorso parametri da aggiungere che ho già specificato sotto nel secondo prompt.
+    
+    `;
 
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
@@ -115,24 +119,75 @@ export const callChatGpt = async (text: string): Promise<any> => {
 
     const rawReply = response.data.choices[0].message.content;
 
-
-
     const sanitizedReply = rawReply.replace(/,\s*([}\]])/g, '$1').trim();
-
-    
 
     let parsedReply;
     try {
       parsedReply = JSON.parse(sanitizedReply);
-    } catch (error:any) {
+    } catch (error: any) {
       console.error('Errore di parsing JSON:', error.message);
       throw new Error('Il JSON restituito da ChatGPT non è valido.');
     }
 
-    return parsedReply;
+    const missingParams = checkMissingParams(parsedReply);
 
-  } catch (error:any) {
-    console.error('Errore nella chiamata a ChatGPT:', error.message);
+    if (missingParams.length > 0) {
+      const followUpPrompt = `
+        Alcuni parametri sono mancanti nel messaggio che ho analizzato. Questi sono i parametri mancanti: ${missingParams.join(", ")}. 
+        Crea un messaggio in italiano per chiedere all'utente di fornire i parametri mancanti. Usa un tono educato e chiaro.
+      `;
+
+      const followUpResponse = await axios.post(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          model: 'gpt-4',
+          messages: [
+            { role: 'system', content: 'You are an assistant capable of generating follow-up messages based on missing data.' },
+            { role: 'user', content: followUpPrompt },
+          ],
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          },
+        }
+      );
+
+      const followUpMessage = followUpResponse.data.choices[0].message.content.trim();
+
+      return {
+        message: 'Mancano alcuni parametri. Ecco cosa manca:',
+        missingParams,
+        followUpMessage,
+      };
+    }
+
+    return {
+      message: 'Tutti i parametri sono stati estratti correttamente.',
+      data: parsedReply,
+    };
+
+  } catch (error: any) {
+    console.error('Errore nella chiamata a ChatGPT: ', error.message);
     throw new Error('Errore nella chiamata a ChatGPT. Controlla i log.');
   }
+};
+
+const checkMissingParams = (response: any): string[] => {
+  const requiredParams = [
+    'pickUpDate', 'dropOffDate', 'driver_name', 'customer_name', 
+    'driver_phone', 'customer_phone', 'group', 'workflow', 
+    'pickUpLocation', 'dropOffLocation', 'movementType'
+  ];
+
+  const missingParams: string[] = [];
+
+  requiredParams.forEach((param) => {
+    if (!response[param] || (Array.isArray(response[param]) && response[param].length === 0)) {
+      missingParams.push(param);
+    }
+  });
+
+  return missingParams;
 };

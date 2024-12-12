@@ -1,13 +1,13 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
-export interface User extends Document {
-  user_id: mongoose.Types.ObjectId;
+interface User extends Document {
+  username: string;
   token: string;
 }
 
-const UserSchema: Schema = new Schema(
+const UserSchema = new Schema<User>(
   {
-    user_id: { type: Schema.Types.ObjectId, required: true, unique: true },
+    username: { type: String, required: true, unique: true },
     token: { type: String, required: true },
   },
   {
@@ -16,7 +16,7 @@ const UserSchema: Schema = new Schema(
   }
 );
 
-const UserModel =
-  mongoose.models.User || mongoose.model<User>('User', UserSchema);
+const UserModel = mongoose.models.User || mongoose.model<User>("User", UserSchema);
 
 export default UserModel;
+
