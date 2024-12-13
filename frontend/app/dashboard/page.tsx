@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Banner, Button, Spinner } from "flowbite-react";
 import TextMessage from "../_components/TextMessage";
 
+import { useRouter } from "next/navigation";
 
 const AudioMessage = dynamic(() => import("../_components/AudioMessage"), {
   ssr: false,
@@ -17,8 +18,19 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [requestStatus, setRequestStatus] = useState<string | null>(null);
   const [vehicles, setVehicles] = useState<any[]>([]);
+  const [userId, setUserId] = useState<string | null>(null); 
 
-  const userId = "64b60e4c3c3a1b0f12345678";
+  const router = useRouter();
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("userId");
+    if (storedUserId) {
+      setUserId(storedUserId);
+    } else {
+      console.error("ID utente non trovato, reindirizzamento al login");
+      router.push("/login");
+    }
+  }, [router]);
 
   const handleIconClick = (method: "text" | "audio") => {
     setInputMethod(method);
@@ -56,11 +68,8 @@ export default function Dashboard() {
 
       if (response?.ok) {
         const result = await response.json();
-        console.log("Request succeeded:", result);
-
         const availableVehicles = result?.availableVehicles?.result || [];
         setVehicles(Array.isArray(availableVehicles) ? availableVehicles : []);
-
         availableVehicles.forEach((vehicle: any) => {
           console.log("Targa del veicolo:", vehicle.plate);
         });
@@ -77,6 +86,12 @@ export default function Dashboard() {
       setIsLoading(false);
     }
   };
+
+  const handleGoBack = () => {
+    router.push("/");
+  };
+
+
 
   return (
     <div className="overflow-auto flex flex-col w-full h-screen items-center page-custom">
@@ -139,6 +154,10 @@ export default function Dashboard() {
             : "Errore durante la richiesta."}
         </div>
       )}
+      <div className="flex w-full h-screen justify-end items-end p-2">
+        <Button className="mt-6" onClick={handleGoBack}>
+        <i className="fa-solid fa-arrow-left"></i>
+      </Button></div>
     </div>
   );
 }

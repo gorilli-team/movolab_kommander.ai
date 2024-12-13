@@ -1,22 +1,18 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface Response extends Document {
-  response_id: mongoose.Types.ObjectId;
+  _id: mongoose.Types.ObjectId;
   message_id: mongoose.Types.ObjectId;
-//   conversation_id: mongoose.Types.ObjectId;
-  response_text?: string;
-  response_json?: Record<string, unknown>;
-  missing_parameters: string[];
+  responseText: string;
+  missingParameters: string[];
 }
 
 const ResponseSchema: Schema = new Schema(
   {
-    response_id: { type: Schema.Types.ObjectId, required: true, unique: true },
-    message_id: { type: Schema.Types.ObjectId, ref: 'Message', required: true },
-    // conversation_id: { type: Schema.Types.ObjectId, required: true },
-    response_text: { type: String },
-    response_json: { type: Schema.Types.Mixed },
-    missing_parameters: { type: [String], required: true }, 
+    _id: { type: Schema.Types.ObjectId, auto: true },
+    message_id: { type: Schema.Types.ObjectId, ref: 'Message' },
+    responseText: { type: String },
+    missingParameters: { type: [String] },
   },
   {
     timestamps: true,

@@ -23,6 +23,8 @@ export default function Login() {
       });
 
       if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem("userId", data.userId);
         router.push("/dashboard");
       } else {
         const errorData = await response.json();

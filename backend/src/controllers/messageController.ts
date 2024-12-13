@@ -3,6 +3,7 @@ import Message from '../models/messageModel';
 import { callChatGpt } from './chatGptController';
 import { movolabAvailableVehicles } from './movolabController';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 
 dotenv.config();
 
@@ -33,11 +34,25 @@ export const createMessage = async (req: Request, res: Response) => {
 
     console.log('Message saved successfully:', message);
 
+
     const gptResponse = await callChatGpt(message_text);
     console.log('GPT Response:', gptResponse);
 
-    message.parameters = gptResponse;
 
+    const responseId = new mongoose.Types.ObjectId(); 
+
+
+    const gptMessageResponse = {
+      _id: responseId,
+      responseText: gptResponse.response.responseText,
+      missingParameters: gptResponse.response.missingParameters,
+    };
+
+    
+    message.parameters = {
+      ...gptResponse,
+      response: gptMessageResponse, 
+    };
 
     await message.save();
 
@@ -48,6 +63,7 @@ export const createMessage = async (req: Request, res: Response) => {
       throw new Error('MOVOLAB_AUTH_TOKEN non definito nell\'env');
     }
 
+
     const availableVehicles = await fetchAvailableVehicles({
       pickUpDate,
       dropOffDate,
@@ -56,6 +72,7 @@ export const createMessage = async (req: Request, res: Response) => {
       group,
       movementType,
       workflow,
+      response: gptMessageResponse,
     }, authToken);
 
     console.log("Veicoli disponibili: ", availableVehicles);
@@ -69,6 +86,7 @@ export const createMessage = async (req: Request, res: Response) => {
     handleErrorResponse(res, error, 400);
   }
 };
+
 
 
 const fetchAvailableVehicles = async (params: any, authToken: string) => {
