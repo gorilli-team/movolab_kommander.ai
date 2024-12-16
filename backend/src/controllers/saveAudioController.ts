@@ -143,11 +143,25 @@ const transcribeFileWithWhisper = async (filePath: string): Promise<string> => {
   return response.data.text;
 };
 
+const conversationId = new mongoose.Types.ObjectId(); 
+  
+     
+const conversationNumber = 1;
+
+
+const status = 'incompleted';
+
 const saveTranscriptionToDatabase = async (transcription: string) => {
+  
   const message = new Message({
     message_text: transcription,
     message_type: 'audio',
     user_id: userId,
+    conversation: {
+      conversationId,
+      conversationNumber,
+      status,
+    },
   });
 
   return await message.save();

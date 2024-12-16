@@ -57,7 +57,7 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
   10. DropOffLocation (id, nome), è legato a rental location.
   11. Il tipo di movimento, sicuramente ti verrà indicato il nome e non l'enum. 
   12. Response (response text, missing parameters). 
-    =>  - ResponseText: Un messaggio indicativo riguardo l'esito della richiesta.
+    =>  - ResponseText: Un messaggio indicativo riguardo l'esito della richiesta. Se manca anche solo un parametro devi scrivere ERRORE, elencando i parametri mancanti.
         - MissingParameters: Un array dove vengo inseriti i parametri mancanti, se non mancano parametri allora l'array sarà vuoto.
 
   I dati di riferimento sono i seguenti:
@@ -78,7 +78,7 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
     "driver_phone": "+39 012 345 6789",
     "customer_phone": "+39 987 654 3210",
     "response": {
-      "responseText": "Ricerca effettuata con successo, ecco qui tutti i veicoli. / Errore, ti mancano i seguenti parametri: es. "workflow", "customer_phone",
+      "responseText": "Richiesta riuscita / Errore nella richiesta, mancano i seguenti parametri: ["workflow"],
       "missingParameters": ["customer_phone", "workflow"]
     },
     "group": [

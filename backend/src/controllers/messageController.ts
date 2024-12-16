@@ -26,10 +26,25 @@ export const createMessage = async (req: Request, res: Response) => {
   const { message_text, message_type, user_id } = req.body;
 
   try {
+    const responseId = new mongoose.Types.ObjectId(); 
+
+    const conversationId = new mongoose.Types.ObjectId(); 
+
+   
+    const conversationNumber = 1;
+
+
+    const status = 'incompleted';
+
     const message = new Message({
       message_text,
       message_type,
       user_id,
+      conversation: {
+        conversationId,
+        conversationNumber,
+        status,
+      },
     });
 
     console.log('Message saved successfully:', message);
@@ -37,11 +52,7 @@ export const createMessage = async (req: Request, res: Response) => {
 
     const gptResponse = await callChatGpt(message_text);
     console.log('GPT Response:', gptResponse);
-
-
-    const responseId = new mongoose.Types.ObjectId(); 
-
-
+    
     const gptMessageResponse = {
       _id: responseId,
       responseText: gptResponse.response.responseText,

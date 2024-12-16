@@ -9,6 +9,11 @@ export interface Message extends Document {
   user_id: mongoose.Types.ObjectId;
   message_text: string;
   message_type: 'audio' | 'text';
+  conversation: {
+    conversationId: mongoose.Types.ObjectId;
+    conversationNumber: number;
+    status: 'completed' | 'incompleted';
+  };
   parameters?: {
     pickUpDate?: Date;
     dropOffDate?: Date;
@@ -32,6 +37,11 @@ const MessageSchema: Schema = new Schema(
     user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     message_text: { type: String, required: true },
     message_type: { type: String, enum: ['audio', 'text'], required: true },
+    conversation: {
+      conversationId: { type: Schema.Types.ObjectId, required: true },
+      conversationNumber: { type: Number, required: true },
+      status: { type: String, enum: ['completed', 'incompleted'], required: true },
+    },
     parameters: {
       type: new Schema(
         {
