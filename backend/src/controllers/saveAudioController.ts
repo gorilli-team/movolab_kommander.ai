@@ -10,6 +10,7 @@ import dotenv from 'dotenv';
 import Message from '../models/messageModel';
 import { callChatGpt } from './chatGptController';
 import { movolabAvailableVehicles } from './movolabController';
+import mongoose from 'mongoose';
 
 dotenv.config();
 const userId = "64b60e4c3c3a1b0f12345678";
@@ -152,18 +153,36 @@ const saveTranscriptionToDatabase = async (transcription: string) => {
   return await message.save();
 };
 
+
 const updateMessageWithAnalysis = async (message: any, gptResponse: any) => {
-  message.parameters = gptResponse;
+  const responseId = new mongoose.Types.ObjectId();
+
+  const gptMessageResponse = {
+    _id: responseId,
+    responseText: gptResponse.response.responseText,
+    missingParameters: gptResponse.response.missingParameters,
+  };
+
+  message.parameters = {
+    ...gptResponse,
+    response: gptMessageResponse,
+  };
+
   await message.save();
 };
 
 const handleAvailableVehicles = async (gptResponse: any) => {
   const { pickUpDate, dropOffDate, pickUpLocation, dropOffLocation, group, movementType, workflow } = gptResponse;
-
   const authToken = process.env.MOVOLAB_AUTH_TOKEN;
+
   if (!authToken) {
     throw new Error('MOVOLAB_AUTH_TOKEN is not set in the environment');
   }
+
+  const gptMessageResponse = {
+    responseText: gptResponse.response.responseText,
+    missingParameters: gptResponse.response.missingParameters,
+  };
 
   const availableVehicles = await movolabAvailableVehicles({
     pickUpDate,
@@ -173,7 +192,9 @@ const handleAvailableVehicles = async (gptResponse: any) => {
     group,
     movementType,
     workflow,
+    response: gptMessageResponse,
   }, authToken);
 
-  return availableVehicles;  
+  return availableVehicles;
 };
+

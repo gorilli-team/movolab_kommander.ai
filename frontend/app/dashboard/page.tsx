@@ -18,12 +18,13 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [requestStatus, setRequestStatus] = useState<string | null>(null);
   const [vehicles, setVehicles] = useState<any[]>([]);
-  const [userId, setUserId] = useState<string | null>(null); 
+  const [userId, setUserId] = useState<string | null>(null);
 
   const router = useRouter();
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
+    console.log("User ID from localStorage:", storedUserId);
     if (storedUserId) {
       setUserId(storedUserId);
     } else {
@@ -42,6 +43,8 @@ export default function Dashboard() {
     setIsLoading(true);
     setRequestStatus(null);
 
+    console.log("User ID on submit:", userId); 
+
     try {
       let response;
       if (inputMethod === "text") {
@@ -59,6 +62,7 @@ export default function Dashboard() {
       } else if (inputMethod === "audio" && audioFile) {
         const formData = new FormData();
         formData.append("audio", audioFile, "audioMessage.wav");
+        formData.append("user_id", userId ?? ""); 
 
         response = await fetch("http://localhost:5000/upload-audio", {
           method: "POST",
@@ -90,8 +94,6 @@ export default function Dashboard() {
   const handleGoBack = () => {
     router.push("/");
   };
-
-
 
   return (
     <div className="overflow-auto flex flex-col w-full h-screen items-center page-custom">
@@ -156,8 +158,9 @@ export default function Dashboard() {
       )}
       <div className="flex w-full h-screen justify-end items-end p-2">
         <Button className="mt-6" onClick={handleGoBack}>
-        <i className="fa-solid fa-arrow-left"></i>
-      </Button></div>
+          <i className="fa-solid fa-arrow-left"></i>
+        </Button>
+      </div>
     </div>
   );
 }
