@@ -44,7 +44,15 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
   };
   
   const prompt = `
-  Analizza il seguente messaggio del cliente: "${text}" ed estrai i seguenti parametri:
+  Analizza il seguente messaggio del cliente: "${text}" e seguendo i seguenti dati di riferimento,
+
+  - **Gruppi di veicoli**: ${JSON.stringify(referenceData.groups)}
+  - **Workflows**: ${JSON.stringify(referenceData.workflows)}
+  - **Location di noleggio**: ${JSON.stringify(referenceData.rental_location)}
+  - **Tipi di movimento**: ${JSON.stringify(referenceData.movement_types)}
+
+  estrai i seguenti parametri:
+
   1. La data di presa del veicolo (formato: YYYY-MM-DDTHH:MM).
   2. La data di restituzione del veicolo (formato: YYYY-MM-DDTHH:MM).
   3. Il nome del conducente.
@@ -60,13 +68,7 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
     =>  - ResponseText: Un messaggio indicativo riguardo l'esito della richiesta. Se manca anche solo un parametro devi scrivere ERRORE, elencando i parametri mancanti.
         - MissingParameters: Un array dove vengo inseriti i parametri mancanti, se non mancano parametri allora l'array sarà vuoto.
 
-  Se manca un parametro, restituisci il valore a null.
-
-  I dati di riferimento sono i seguenti:
-  - **Gruppi di veicoli**: ${JSON.stringify(referenceData.groups)}
-  - **Workflows**: ${JSON.stringify(referenceData.workflows)}
-  - **Location di noleggio**: ${JSON.stringify(referenceData.rental_location)}
-  - **Tipi di movimento**: ${JSON.stringify(referenceData.movement_types)}
+  Se manca un parametro, restituisci il valore a null. Devi seguire bene i dati di riferimento.
   
   Rispondi in formato JSON come nell'esempio qui sotto:
   
