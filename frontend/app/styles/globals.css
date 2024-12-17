@@ -2,63 +2,87 @@
 @tailwind components;
 @tailwind utilities;
 
-@import 'flowbite';
-
 body{
   font-family: "Inter", sans-serif;
   background-color: lightgray;
 }
-
-.page-custom{
-  padding-top: 200px;
-}
-
-.focus\:ring-4:focus,
-.focus\:outline-none:focus,
-.focus\:z-10:focus {
-    outline: none !important;
-    box-shadow: none !important;
-}
-
-@media (min-width: 640px) {
-  .sm\:w-auto {
-      width: 92%;
-  }
-}
-
-
-.banner-custom{
-  width: 500px;
+.banner-custom-title {
   border-radius: 10px 10px 0 0;
 }
 
-.banner-custom-bottom{
-  width: 500px;
+.banner-custom-chat{
+  min-height: 400px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.banner-custom-footer {
   border-radius: 0 0 10px 10px;
 }
 
-.fa-solid{
-  line-height: inherit !important;
+.logo-kommander-chat {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
-button.button-custom.group.relative.flex.items-stretch.justify-center{
-  width: 230px;
+.hour-message {
+  font-size: 12px;
+  color: grey;
+  padding-left: 6px;
 }
 
-.button-submit-custom{
-  width: 100px;
+.widget-custom{
+  width: 900px;
 }
 
-canvas.sound-wave{
-  width: 420px;
-  border-radius: 10px;
-  height: 80px;
+.info-message-div, .message{
+  padding-left: 8px;
 }
 
-.container-custom{
-   max-width: 900px;
+
+.btn-microphone {
+  background-color: #f3f4f6;
+  color: #4b5563;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
-input.block.w-full.border{
-  width: 250px;
+.btn-microphone:hover {
+  background-color: #e5e7eb;
+}
+
+
+.btn-send {
+  background-color: #3b82f6;
+  color: white;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-send:hover {
+  background-color: #2563eb;
+}
+
+.btn-audio {
+  background-color: #10b981;
+  color: white;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-audio:hover {
+  background-color: #059669;
 }

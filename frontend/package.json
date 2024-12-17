@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@types/react-router-dom": "^5.3.3",
+    "autoprefixer": "^10.4.20",
     "flowbite": "^2.5.2",
     "flowbite-react": "^0.10.2",
     "frontend": "file:",
@@ -26,8 +27,8 @@
     "@types/recordrtc": "^5.6.14",
     "eslint": "^8",
     "eslint-config-next": "15.0.3",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.16",
     "typescript": "^5.7.2"
   }
 }

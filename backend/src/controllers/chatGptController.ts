@@ -60,13 +60,13 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
     =>  - ResponseText: Un messaggio indicativo riguardo l'esito della richiesta. Se manca anche solo un parametro devi scrivere ERRORE, elencando i parametri mancanti.
         - MissingParameters: Un array dove vengo inseriti i parametri mancanti, se non mancano parametri allora l'array sarà vuoto.
 
+  Se manca un parametro, restituisci il valore a null.
+
   I dati di riferimento sono i seguenti:
   - **Gruppi di veicoli**: ${JSON.stringify(referenceData.groups)}
   - **Workflows**: ${JSON.stringify(referenceData.workflows)}
   - **Location di noleggio**: ${JSON.stringify(referenceData.rental_location)}
   - **Tipi di movimento**: ${JSON.stringify(referenceData.movement_types)}
-
-  ⚠️ Importante: Non inventare informazioni. Se non trovi dei parametri, restituisci il parametro o i parametri a null.
   
   Rispondi in formato JSON come nell'esempio qui sotto:
   
@@ -77,10 +77,6 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
     "customer_name": "Giovanni Verdi",
     "driver_phone": "+39 012 345 6789",
     "customer_phone": "+39 987 654 3210",
-    "response": {
-      "responseText": "Richiesta riuscita / Errore nella richiesta, mancano i seguenti parametri: ["workflow"],
-      "missingParameters": ["customer_phone", "workflow"]
-    },
     "group": [
       { "_id": "63acb41afd939e8f05d5069a", "mnemonic": "2WC", "description": "SCOOTER" }
     ],
@@ -101,6 +97,10 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
       "name": "Noleggio",
       "enum": "NOL"
     }, 
+    "response": {
+      "responseText": "Richiesta riuscita / Errore nella richiesta, mancano i seguenti parametri: ["workflow"],
+      "missingParameters": ["customer_phone", "workflow"]
+    },
   }
 `;
 
@@ -130,6 +130,7 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
     throw new Error('Errore nella chiamata a ChatGPT. Controlla i log.');
   }
 };
+
 
 
 const parseChatGptResponse = (rawReply: string): Record<string, any> => {
