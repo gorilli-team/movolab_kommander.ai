@@ -1,77 +1,133 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { TextInput, Button } from "flowbite-react";
+import React, { useState } from "react";
+import dynamic from "next/dynamic";
+import { Banner, Button, Spinner } from "flowbite-react";
+import TextMessage from "./_components/TextMessage";
 
-export default function Login() {
-  const [username, setUsername] = useState("");
-  const [token, setToken] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+const AudioMessage = dynamic(() => import("./_components/AudioMessage"), {
+  ssr: false,
+});
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+export default function Dashboard() {
+  const [inputMethod, setInputMethod] = useState<"text" | "audio" | null>(null);
+  const [message, setMessage] = useState<string>("");
+  const [audioFile, setAudioFile] = useState<Blob | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [requestStatus, setRequestStatus] = useState<string | null>(null);
+
+  const handleIconClick = (method: "text" | "audio") => {
+    setInputMethod(method);
+    setRequestStatus(null);
+  };
+
+  const handleAudioSubmit = async () => {
+    if (!audioFile) return;
+    setIsLoading(true);
+    setRequestStatus(null);
 
     try {
-      const response = await fetch("http://localhost:5000/login", {
+      const formData = new FormData();
+      formData.append("audio", audioFile, "audioMessage.wav");
+
+      const response = await fetch("http://localhost:5000/upload-audio", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, token }),
+        body: formData,
       });
 
       if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem("userId", data.userId);
-        router.push("/dashboard");
+        const result = await response.json();
+        setRequestStatus("success");
       } else {
-        const errorData = await response.json();
-        setError(errorData.message || "Errore sconosciuto durante il login.");
+        setRequestStatus("error");
       }
-    } catch (err) {
-      setError("Errore di rete. Controlla la tua connessione.");
-      console.error("Errore di connessione:", err);
+    } catch (error) {
+      setRequestStatus("error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTextSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setRequestStatus(null);
+
+    try {
+      const response = await fetch("http://localhost:5000/new_message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message_text: message, message_type: "text" }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setRequestStatus("success");
+      } else {
+        setRequestStatus("error");
+      }
+    } catch (error) {
+      setRequestStatus("error");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col w-full h-screen justify-center items-center">
-      <div className="w-full h-screen flex justify-center items-center">
-        <form onSubmit={handleSubmit}>
-          <div>
-            <TextInput
-              className="py-2"
-              type="text"
-              id="authUsername"
-              placeholder="Username"
-              required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-            <TextInput
-              className="py-2"
-              type="text"
-              id="authToken"
-              placeholder="Token autenticazione Movolab"
-              required
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-            />
-          </div>
-          <div className="mt-4">
-            <Button className="button-submit-custom" color="blue" type="submit">
-              Vai
-            </Button>
-          </div>
-          {error && (
-            <div className="mt-2 text-red-600">
-              {error}
-            </div>
-          )}
-        </form>
-      </div>
+    <div className="flex flex-col w-full h-screen items-center page-custom">
+      <Banner>
+        <h2 className="font-bold">Cosa vuoi fare?</h2>
+      </Banner>
+
+      {/* Pulsanti per selezionare il metodo */}
+      {!inputMethod && (
+        <div className="flex gap-4 mt-4">
+          <Button color="blue" onClick={() => handleIconClick("text")}>
+            Inserisci Testo
+          </Button>
+          <Button color="green" onClick={() => handleIconClick("audio")}>
+            Registra Audio
+          </Button>
+        </div>
+      )}
+
+      {/* Componente per messaggi di testo */}
+      {inputMethod === "text" && (
+        <TextMessage
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onSubmit={handleTextSubmit}
+        />
+      )}
+
+      {/* Componente per messaggi audio */}
+      {inputMethod === "audio" && (
+        <AudioMessage
+          onAudioReady={(blob) => {
+            setAudioFile(blob);
+          }}
+        />
+      )}
+
+      {/* Visualizza il file audio se presente */}
+      {audioFile && inputMethod === "audio" && (
+        <div className="mt-4 flex flex-col items-center">
+          <audio controls src={URL.createObjectURL(audioFile)} />
+          <Button onClick={handleAudioSubmit} color="gray" disabled={isLoading}>
+            Invia Audio
+          </Button>
+        </div>
+      )}
+
+      {/* Stato di caricamento */}
+      {isLoading && <Spinner />}
+
+      {/* Messaggio di stato della richiesta */}
+      {requestStatus && (
+        <div>
+          {requestStatus === "success" ? "Richiesta completata con successo!" : "Errore nella richiesta."}
+        </div>
+      )}
     </div>
   );
 }

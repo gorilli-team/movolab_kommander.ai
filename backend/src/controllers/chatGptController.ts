@@ -52,7 +52,7 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
   5. Il numero di telefono del conducente.
   6. Il numero di telefono del cliente.
   7. Il gruppo di veicoli (id, mnemonic, description). Tendenzialmente il gruppo è rappresentato dal tipo di veicolo. Puoi anche scegliere tutti i gruppi quindi devi prenderli tutti.
-  8. Il workflow (id, nome).
+  8. Il workflow (id, nome). Attenzione tra prepagato prenotazione e prepagato apertura movo.
   9. PickUpLocation (id, nome), è legato a rental location.
   10. DropOffLocation (id, nome), è legato a rental location.
   11. Il tipo di movimento, sicuramente ti verrà indicato il nome e non l'enum. 

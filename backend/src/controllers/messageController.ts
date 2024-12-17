@@ -23,7 +23,7 @@ export const getMessages = async (req: Request, res: Response) => {
 };
 
 export const createMessage = async (req: Request, res: Response) => {
-  const { message_text, message_type, user_id } = req.body;
+  const { message_text, message_type } = req.body;
 
   try {
     const responseId = new mongoose.Types.ObjectId(); 
@@ -39,7 +39,6 @@ export const createMessage = async (req: Request, res: Response) => {
     const message = new Message({
       message_text,
       message_type,
-      user_id,
       conversation: {
         conversationId,
         conversationNumber,

@@ -13,7 +13,6 @@ import { movolabAvailableVehicles } from './movolabController';
 import mongoose from 'mongoose';
 
 dotenv.config();
-const userId = "64b60e4c3c3a1b0f12345678";
 
 if (ffmpegPath) {
   ffmpeg.setFfmpegPath(ffmpegPath);
@@ -156,7 +155,6 @@ const saveTranscriptionToDatabase = async (transcription: string) => {
   const message = new Message({
     message_text: transcription,
     message_type: 'audio',
-    user_id: userId,
     conversation: {
       conversationId,
       conversationNumber,
