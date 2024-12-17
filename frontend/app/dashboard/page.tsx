@@ -17,7 +17,7 @@ export default function Dashboard() {
   const [audioFile, setAudioFile] = useState<Blob | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [requestStatus, setRequestStatus] = useState<string | null>(null);
-  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
 
   const router = useRouter();
@@ -72,12 +72,9 @@ export default function Dashboard() {
 
       if (response?.ok) {
         const result = await response.json();
-        const availableVehicles = result?.availableVehicles?.result || [];
-        setVehicles(Array.isArray(availableVehicles) ? availableVehicles : []);
-        availableVehicles.forEach((vehicle: any) => {
-          console.log("Targa del veicolo:", vehicle.plate);
-        });
-
+        console.log("Risposta completa del backend:", result);
+        console.log("Oggetto completo dei veicoli disponibili:", result?.availableVehicles);
+        setMessages(result?.availableVehicles || []);
         setRequestStatus("success");
       } else {
         console.error("Error in response:", await response?.json());

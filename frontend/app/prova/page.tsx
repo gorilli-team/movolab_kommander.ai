@@ -3,6 +3,7 @@
 import React from "react";
 
 export default function Dashboard() {
+
   return (
     <div className="overflow-auto flex w-full h-screen justify-center items-center bg-gray-100">
       <div className="widget-custom rounded-lg shadow-lg bg-white">
@@ -68,7 +69,7 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <div className="flex space-x-4">
+          <div className="flex banner-buttons">
             <button
               className="btn-send"
               onClick={() => console.log("Invio messaggio")}
