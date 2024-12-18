@@ -1,16 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { useReactMediaRecorder } from "react-media-recorder";
+import { Spinner } from "flowbite-react";
 
 export default function Dashboard() {
   const [message, setMessage] = useState<string>("");
   const [audioFile, setAudioFile] = useState<Blob | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-
-  const [userMessages, setUserMessages] = useState<any[]>([]);
-  const [kommanderMessages, setKommanderMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
 
   const { startRecording, stopRecording, status, mediaBlobUrl } = useReactMediaRecorder({
     audio: true,
@@ -20,49 +19,129 @@ export default function Dashboard() {
     },
   });
 
+  const addMessage = (type: "user" | "kommander", content: string | Blob, isLoading: boolean = false) => {
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      {
+        type,
+        content,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isLoading,
+      },
+    ]);
+  };
+
   const handleTextSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message) return;
 
-    setIsLoading(true);
-
-    setUserMessages((prevMessages) => [
-      ...prevMessages,
-      { type: "user", content: message, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
-    ]);
-
+    addMessage("user", message);
     setMessage("");
 
-    setTimeout(() => {
-      setKommanderMessages((prevMessages) => [
-        ...prevMessages,
-        { type: "kommander", content: "Risposta automatica di Kommander", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
-      ]);
-    }, 1000);
+    setIsLoading(true);
+    addMessage("kommander", "", true);
 
-    setIsLoading(false);
+    try {
+      const response = await fetch("http://localhost:5000/new_message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message_text: message, message_type: "text" }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const responseText = result.createdMessage?.parameters?.response?.responseText || "Messaggio non disponibile";
+
+        setMessages((prevMessages) => {
+          const newMessages = [...prevMessages];
+          const lastKommanderMessage = newMessages.find((msg) => msg.type === "kommander" && msg.isLoading);
+          if (lastKommanderMessage) {
+            lastKommanderMessage.content = responseText;
+            lastKommanderMessage.isLoading = false;
+          }
+          return newMessages;
+        });
+      } else {
+        setMessages((prevMessages) => {
+          const newMessages = [...prevMessages];
+          const lastKommanderMessage = newMessages.find((msg) => msg.type === "kommander" && msg.isLoading);
+          if (lastKommanderMessage) {
+            lastKommanderMessage.content = "Errore nella richiesta.";
+            lastKommanderMessage.isLoading = false;
+          }
+          return newMessages;
+        });
+      }
+    } catch (error) {
+      setMessages((prevMessages) => {
+        const newMessages = [...prevMessages];
+        const lastKommanderMessage = newMessages.find((msg) => msg.type === "kommander" && msg.isLoading);
+        if (lastKommanderMessage) {
+          lastKommanderMessage.content = "Errore di rete o server.";
+          lastKommanderMessage.isLoading = false;
+        }
+        return newMessages;
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleAudioSubmit = async () => {
     if (!audioFile) return;
 
-    setIsLoading(true);
-
-    setUserMessages((prevMessages) => [
-      ...prevMessages,
-      { type: "user", content: audioFile, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
-    ]);
-
+    addMessage("user", audioFile);
     setAudioFile(null);
 
-    setTimeout(() => {
-      setKommanderMessages((prevMessages) => [
-        ...prevMessages,
-        { type: "kommander", content: "Risposta automatica di Kommander", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
-      ]);
-    }, 1000);
+    setIsLoading(true);
+    addMessage("kommander", "", true);
 
-    setIsLoading(false);
+    try {
+      const formData = new FormData();
+      formData.append("audio", audioFile, "audioMessage.wav");
+
+      const response = await fetch("http://localhost:5000/upload-audio", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const responseText = result.createdMessage?.parameters?.response?.responseText || "Messaggio non disponibile";
+
+        setMessages((prevMessages) => {
+          const newMessages = [...prevMessages];
+          const lastKommanderMessage = newMessages.find((msg) => msg.type === "kommander" && msg.isLoading);
+          if (lastKommanderMessage) {
+            lastKommanderMessage.content = responseText;
+            lastKommanderMessage.isLoading = false;
+          }
+          return newMessages;
+        });
+      } else {
+        setMessages((prevMessages) => {
+          const newMessages = [...prevMessages];
+          const lastKommanderMessage = newMessages.find((msg) => msg.type === "kommander" && msg.isLoading);
+          if (lastKommanderMessage) {
+            lastKommanderMessage.content = "Errore nella richiesta.";
+            lastKommanderMessage.isLoading = false;
+          }
+          return newMessages;
+        });
+      }
+    } catch (error) {
+      setMessages((prevMessages) => {
+        const newMessages = [...prevMessages];
+        const lastKommanderMessage = newMessages.find((msg) => msg.type === "kommander" && msg.isLoading);
+        if (lastKommanderMessage) {
+          lastKommanderMessage.content = "Errore di rete o server.";
+          lastKommanderMessage.isLoading = false;
+        }
+        return newMessages;
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleMicrophoneClick = () => {
@@ -83,9 +162,12 @@ export default function Dashboard() {
         </div>
 
         <div className="banner-custom-chat p-4">
-          {userMessages.map((message, index) => (
-            <div key={index} className="w-full">
-              <div className="banner-chat-user flex">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`w-full flex ${message.type === "user" ? "" : "justify-end"}`}
+            >
+              <div className={`banner-chat-${message.type} flex`}>
                 <img
                   className="logo-kommander-chat"
                   src={message.type === "user" ? "./spiaggia-tramonto.png" : "./kommander-logo.png"}
@@ -93,37 +175,22 @@ export default function Dashboard() {
                 />
                 <div>
                   <div className="info-message-div">
-                    <span className="font-bold type-user">{message.type === "user" ? "User" : "Kommander.ai"}</span>
+                    <span className="font-bold type-user">
+                      {message.type === "user" ? "User" : "Kommander.ai"}
+                    </span>
                     <span className="hour-message">{message.time}</span>
                   </div>
-                  {message.type === "user" && typeof message.content === "string" ? (
-                    <p className="message pt-1">{message.content}</p>
-                  ) : message.type === "user" && message.content instanceof Blob ? (
-                    <div className="w-full max-w-md mb-2 ml-2">
+                  {message.type === "user" && message.content instanceof Blob ? (
+                    <div className="w-full max-w-md mb-2 pt-2">
                       <audio controls src={URL.createObjectURL(message.content)} />
+                    </div>
+                  ) : message.type === "kommander" && message.isLoading ? (
+                    <div className="w-full max-w-md mb-2 pt-2">
+                      <Spinner aria-label="Caricamento risposta" />
                     </div>
                   ) : (
                     <p className="message pt-1">{message.content}</p>
                   )}
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {kommanderMessages.map((message, index) => (
-            <div key={index} className="w-full flex justify-end">
-              <div className="banner-chat-kommander flex">
-                <img
-                  className="logo-kommander-chat"
-                  src="./kommander-logo.png"
-                  alt="kommander-icon"
-                />
-                <div>
-                  <div className="info-message-div">
-                    <span className="font-bold type-user">Kommander.ai</span>
-                    <span className="hour-message">{message.time}</span>
-                  </div>
-                  <p className="message pt-1">{message.content}</p>
                 </div>
               </div>
             </div>
@@ -169,12 +236,13 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
-
-        {mediaBlobUrl && (
-          <div className="w-full max-w-md mb-2 ml-2">
-            <audio controls src={mediaBlobUrl} />
-          </div>
-        )}
+        <div>
+            {audioFile && !isLoading && (
+              <div className="w-full max-w-md mb-2 ml-2">
+                <audio controls src={URL.createObjectURL(audioFile)} />
+              </div>
+            )}
+        </div>
       </div>
     </div>
   );
