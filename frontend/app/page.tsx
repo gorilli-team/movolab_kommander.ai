@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useReactMediaRecorder } from "react-media-recorder";
 import { Spinner } from "flowbite-react";
 
@@ -10,6 +10,9 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
+  const [vehicles, setVehicles] = useState<any[]>([]);
+
+  const messageContainerRef = useRef<HTMLDivElement | null>(null);
 
   const { startRecording, stopRecording, status, mediaBlobUrl } = useReactMediaRecorder({
     audio: true,
@@ -51,15 +54,33 @@ export default function Dashboard() {
       if (response.ok) {
         const result = await response.json();
         const responseText = result.createdMessage?.parameters?.response?.responseText || "Messaggio non disponibile";
-        const availableVehicles = result.availableVehicles?.parameters?.response?.vehicles || [];
+
+        
+        const availableVehicles = result.availableVehicles?.result || [];
+        setVehicles(availableVehicles);
+
+        let vehiclesList = "";
+        if (availableVehicles.length > 0) {
+          vehiclesList = `
+            <div class="vehicle-list">
+              <p>Scegli uno dei seguenti veicoli disponibili:</p>
+              <ul>
+                ${availableVehicles.map((vehicle: any) => `
+                  <li class="vehicle-item">
+                    <span class="vehicle-icon">🚗</span> 
+                    ${vehicle.brand?.brandName} - ${vehicle.model?.modelName}
+                  </li>`).join("")}
+              </ul>
+            </div>
+          `;
+        }
 
         setMessages((prevMessages) => {
           const newMessages = [...prevMessages];
           const lastKommanderMessage = newMessages.find((msg) => msg.type === "kommander" && msg.isLoading);
           if (lastKommanderMessage) {
-            lastKommanderMessage.content = responseText;
+            lastKommanderMessage.content = `${responseText}<br />${vehiclesList}`; // Aggiungi la lista dei veicoli al messaggio di Kommander
             lastKommanderMessage.isLoading = false;
-
           }
           return newMessages;
         });
@@ -111,11 +132,29 @@ export default function Dashboard() {
         const result = await response.json();
         const responseText = result.createdMessage?.parameters?.response?.responseText || "Messaggio non disponibile";
 
+        const availableVehicles = result.availableVehicles?.result || [];
+        let vehiclesList = "";
+        if (availableVehicles.length > 0) {
+          vehiclesList = `
+            <div class="vehicle-list">
+              <p>Scegli uno dei seguenti veicoli disponibili:</p>
+              <ul>
+                ${availableVehicles.map((vehicle: any) => `
+                  <li class="vehicle-item">
+                    ${vehicle.brand?.brandName} - ${vehicle.model?.modelName}
+                  </li>`).join("")}
+              </ul>
+            </div>
+          `;
+        }
+
+        const messageContent = `${responseText}<br />${vehiclesList}`;
+
         setMessages((prevMessages) => {
           const newMessages = [...prevMessages];
           const lastKommanderMessage = newMessages.find((msg) => msg.type === "kommander" && msg.isLoading);
           if (lastKommanderMessage) {
-            lastKommanderMessage.content = responseText;
+            lastKommanderMessage.content = messageContent;
             lastKommanderMessage.isLoading = false;
           }
           return newMessages;
@@ -156,6 +195,12 @@ export default function Dashboard() {
     }
   };
 
+  useEffect(() => {
+    if (messageContainerRef.current) {
+      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
+
   return (
     <div className="overflow-auto flex w-full h-screen justify-center items-center bg-gray-100">
       <div className="widget-custom rounded-lg shadow-lg bg-white">
@@ -163,7 +208,10 @@ export default function Dashboard() {
           <h2 className="font-bold">Cosa vuoi fare oggi?</h2>
         </div>
 
-        <div className="banner-custom-chat p-4">
+        <div
+          className="banner-custom-chat p-4"
+          ref={messageContainerRef} // Aggiungi il ref per il contenitore dei messaggi
+        >
           {messages.map((message, index) => (
             <div
               key={index}
@@ -191,7 +239,10 @@ export default function Dashboard() {
                       <Spinner aria-label="Caricamento risposta" />
                     </div>
                   ) : (
-                    <p className="message pt-1">{message.content}</p>
+                    <div
+                      className="message pt-1"
+                      dangerouslySetInnerHTML={{ __html: message.content }}
+                    />
                   )}
                 </div>
               </div>
@@ -239,7 +290,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div>
-          {audioFile && !isLoading && (
+          {audioFile && (
             <div className="w-full max-w-md mb-2 ml-2">
               <audio controls src={URL.createObjectURL(audioFile)} />
             </div>

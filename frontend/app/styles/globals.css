@@ -40,7 +40,9 @@ body{
 }
 
 .banner-chat-kommander{
+  width: 50%;
   margin-top: 40px;
+  padding-left: 80px;
 }
 
 .banner-custom-footer {

@@ -100,7 +100,7 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
       "enum": "NOL"
     }, 
     "response": {
-      "responseText": "Richiesta riuscita / Errore nella richiesta, mancano i seguenti parametri: parametro1, parametro2, etc.",
+      "responseText": "Richiesta riuscita! / Errore nella richiesta! Mancano i seguenti parametri: parametro1, parametro2, etc.",
       "missingParameters": "[..., ...]"
     },
   }
