@@ -70,7 +70,7 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
 
   Se manca un parametro, restituisci il valore a null. Devi seguire bene i dati di riferimento.
   
-  Rispondi in formato JSON come nell'esempio qui sotto:
+  Rispondi solo in formato JSON come nell'esempio qui sotto:
   
   {
     "pickUpDate": "2024-12-07T17:13",

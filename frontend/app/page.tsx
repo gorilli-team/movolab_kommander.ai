@@ -25,7 +25,7 @@ export default function Dashboard() {
       {
         type,
         content,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         isLoading,
       },
     ]);
@@ -51,6 +51,7 @@ export default function Dashboard() {
       if (response.ok) {
         const result = await response.json();
         const responseText = result.createdMessage?.parameters?.response?.responseText || "Messaggio non disponibile";
+        const availableVehicles = result.availableVehicles?.parameters?.response?.vehicles || [];
 
         setMessages((prevMessages) => {
           const newMessages = [...prevMessages];
@@ -58,6 +59,7 @@ export default function Dashboard() {
           if (lastKommanderMessage) {
             lastKommanderMessage.content = responseText;
             lastKommanderMessage.isLoading = false;
+
           }
           return newMessages;
         });
@@ -232,16 +234,16 @@ export default function Dashboard() {
               onClick={handleAudioSubmit}
               disabled={isRecording || !audioFile}
             >
-              <span><i className="fa-solid fa-file-audio"></i></span>
+              <span><i className="fa-solid fa-volume-high"></i></span>
             </button>
           </div>
         </div>
         <div>
-            {audioFile && !isLoading && (
-              <div className="w-full max-w-md mb-2 ml-2">
-                <audio controls src={URL.createObjectURL(audioFile)} />
-              </div>
-            )}
+          {audioFile && !isLoading && (
+            <div className="w-full max-w-md mb-2 ml-2">
+              <audio controls src={URL.createObjectURL(audioFile)} />
+            </div>
+          )}
         </div>
       </div>
     </div>
