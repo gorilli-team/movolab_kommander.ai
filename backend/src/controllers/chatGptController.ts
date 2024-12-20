@@ -65,12 +65,12 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
   10. DropOffLocation (id, nome), è legato a rental location.
   11. Il tipo di movimento, sicuramente ti verrà indicato il nome e non l'enum. 
   12. Response (response text, missing parameters). 
-    =>  - ResponseText: Un messaggio indicativo riguardo l'esito della richiesta. Se manca anche solo un parametro devi scrivere ERRORE, elencando i parametri mancanti.
+    =>  - ResponseText: Un messaggio indicativo riguardo l'esito della richiesta. Se manca anche solo un parametro devi scrivere errore, elencando i parametri mancanti.
         - MissingParameters: Un array dove vengo inseriti i parametri mancanti, se non mancano parametri allora l'array sarà vuoto.
 
-  Se manca un parametro, restituisci il valore a null. Devi seguire bene i dati di riferimento.
+  Se un parametro non è presente, restituisci "null" invece di un valore predefinito come "Non fornito".
   
-  Rispondi solo in formato JSON come nell'esempio qui sotto:
+  Rispondi in formato JSON, come nell'esempio qui sotto. Non aggiungere note aggiuntive sotto il json.
   
   {
     "pickUpDate": "2024-12-07T17:13",
@@ -79,6 +79,10 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
     "customer_name": "Giovanni Verdi",
     "driver_phone": "+39 012 345 6789",
     "customer_phone": "+39 987 654 3210",
+    "response": {
+      "responseText": "Richiesta riuscita! / Errore nella richiesta! Mancano i seguenti parametri: parametro1, parametro2, etc.",
+      "missingParameters": "[parameter1, parameter2]"
+    },
     "group": [
       { "_id": "63acb41afd939e8f05d5069a", "mnemonic": "2WC", "description": "SCOOTER" }
     ],
@@ -98,11 +102,7 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
       "_id": " ",
       "name": "Noleggio",
       "enum": "NOL"
-    }, 
-    "response": {
-      "responseText": "Richiesta riuscita! / Errore nella richiesta! Mancano i seguenti parametri: parametro1, parametro2, etc.",
-      "missingParameters": "[..., ...]"
-    },
+    }
   }
 `;
 
@@ -115,6 +115,7 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
           { role: 'system', content: 'You are an assistant specialized in extracting key details from user messages.' },
           { role: 'user', content: prompt },
         ],
+        temperature: 0.2,
       },
       {
         headers: {

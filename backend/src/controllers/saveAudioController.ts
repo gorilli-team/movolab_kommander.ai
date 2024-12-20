@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -45,41 +45,42 @@ const fileFilter = (req: Request, file: any, cb: any) => {
 
 export const upload = multer({ storage: storage, fileFilter: fileFilter });
 
-export const uploadAudio = (req: Request, res: Response, next: NextFunction) => {
+const handleErrorResponse = (res: Response, error: any, status: number = 500) => {
+  const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+  console.error('Error:', errorMessage);
+  res.status(status).json({ error: errorMessage });
+};
+
+export const uploadAudio = (req: Request, res: Response) => {
   upload.single('audio')(req, res, async (err: any) => {
     if (err) {
-      return res.status(400).json({ error: err.message });
+      return handleErrorResponse(res, err, 400);
     }
 
     if (!req.file) {
-      return res.status(400).json({ message: 'No audio file uploaded' });
+      return handleErrorResponse(res, new Error('No audio file uploaded'), 400);
     }
 
     const uploadedFilePath = path.join(uploadsDirectory, req.file.filename);
 
-    let responseSent = false;
-
-    const sendResponse = (status: number, message: string, data?: any) => {
-      if (!responseSent) {
-        responseSent = true;
-        res.status(status).json({ message, ...data });
-      }
-    };
-
     try {
+      let processedFilePath = uploadedFilePath;
       if (path.extname(uploadedFilePath) === '.wav') {
-        const outputFilePath = path.join(uploadsDirectory, Date.now() + '.mp3');
+        const outputFilePath = path.join(uploadsDirectory, `${Date.now()}.mp3`);
         await convertAudioFile(uploadedFilePath, outputFilePath);
-        await transcribeAndProcessFile(outputFilePath, res, sendResponse);
-      } else {
-        await transcribeAndProcessFile(uploadedFilePath, res, sendResponse);
+        processedFilePath = outputFilePath;
       }
-    } catch (err: any) {
-      sendResponse(500, 'Error during processing', { error: err.message || 'Unknown error occurred' });
-    } finally {
-      if (fs.existsSync(uploadedFilePath)) {
-        fs.unlinkSync(uploadedFilePath);
-      }
+
+      const transcription = await transcribeFileWithWhisper(processedFilePath);
+
+      const createdMessage = await createMessageWithAnalysis(transcription, res);
+
+      if (fs.existsSync(uploadedFilePath)) fs.unlinkSync(uploadedFilePath);
+      if (fs.existsSync(processedFilePath)) fs.unlinkSync(processedFilePath);
+
+      res.status(201).json(createdMessage);
+    } catch (error) {
+      handleErrorResponse(res, error);
     }
   });
 };
@@ -100,33 +101,6 @@ const convertAudioFile = (inputFilePath: string, outputFilePath: string): Promis
   });
 };
 
-const transcribeAndProcessFile = async (filePath: string, res: Response, sendResponse: Function) => {
-  try {
-    const transcription = await transcribeFileWithWhisper(filePath);
-    console.log('Transcription result:', transcription);
-
-    const message = await saveTranscriptionToDatabase(transcription);
-
-    const gptResponse = await callChatGpt(transcription);
-    console.log('ChatGPT Analysis Result:', gptResponse);
-
-    await updateMessageWithAnalysis(message, gptResponse);
-
-   
-    const availableVehicles = await handleAvailableVehicles(gptResponse);
-    console.log("Available vehicles: ", availableVehicles);
-
-
-    sendResponse(201, 'Message created and processed successfully', {
-      createdMessage: message,
-      availableVehicles: availableVehicles,
-    });
-  } catch (error: any) {
-    console.error('Error during transcription or DB save:', error);
-    sendResponse(500, 'Error during transcription or DB save', { error: error.message || 'Unknown error occurred' });
-  }
-};
-
 const transcribeFileWithWhisper = async (filePath: string): Promise<string> => {
   const formData = new FormData();
   formData.append('file', fs.createReadStream(filePath));
@@ -142,16 +116,11 @@ const transcribeFileWithWhisper = async (filePath: string): Promise<string> => {
   return response.data.text;
 };
 
-const conversationId = new mongoose.Types.ObjectId(); 
-  
-     
-const conversationNumber = 1;
+const createMessageWithAnalysis = async (transcription: string, res: Response) => {
+  const conversationId = new mongoose.Types.ObjectId();
+  const conversationNumber = 1;
+  const status = 'incompleted';
 
-
-const status = 'incompleted';
-
-const saveTranscriptionToDatabase = async (transcription: string) => {
-  
   const message = new Message({
     message_text: transcription,
     message_type: 'audio',
@@ -162,11 +131,7 @@ const saveTranscriptionToDatabase = async (transcription: string) => {
     },
   });
 
-  return await message.save();
-};
-
-
-const updateMessageWithAnalysis = async (message: any, gptResponse: any) => {
+  const gptResponse = await callChatGpt(transcription);
   const responseId = new mongoose.Types.ObjectId();
 
   const gptMessageResponse = {
@@ -181,22 +146,22 @@ const updateMessageWithAnalysis = async (message: any, gptResponse: any) => {
   };
 
   await message.save();
-};
 
-const handleAvailableVehicles = async (gptResponse: any) => {
   const { pickUpDate, dropOffDate, pickUpLocation, dropOffLocation, group, movementType, workflow } = gptResponse;
-  const authToken = process.env.MOVOLAB_AUTH_TOKEN;
 
-  if (!authToken) {
-    throw new Error('MOVOLAB_AUTH_TOKEN is not set in the environment');
+  if (gptResponse.response.missingParameters.length > 0) {
+    return res.status(400).json({
+      missingParameters: gptResponse.response.missingParameters,
+      responseText: gptMessageResponse.responseText,
+    });
   }
 
-  const gptMessageResponse = {
-    responseText: gptResponse.response.responseText,
-    missingParameters: gptResponse.response.missingParameters,
-  };
+  const authToken = process.env.MOVOLAB_AUTH_TOKEN;
+  if (!authToken) {
+    throw new Error('MOVOLAB_AUTH_TOKEN non definito nell\'env');
+  }
 
-  const availableVehicles = await movolabAvailableVehicles({
+  const availableVehicles = await fetchAvailableVehicles({
     pickUpDate,
     dropOffDate,
     pickUpLocation,
@@ -207,6 +172,30 @@ const handleAvailableVehicles = async (gptResponse: any) => {
     response: gptMessageResponse,
   }, authToken);
 
-  return availableVehicles;
+  res.status(201).json({
+    responseText: gptMessageResponse.responseText,
+    createdMessage: message,
+    availableVehicles: availableVehicles,
+  });
 };
 
+const fetchAvailableVehicles = async (params: any, authToken: string) => {
+  try {
+    if (
+      !params.pickUpDate ||
+      !params.dropOffDate ||
+      !params.pickUpLocation ||
+      !params.dropOffLocation ||
+      !params.movementType ||
+      !params.group ||
+      params.group.length === 0
+    ) {
+      throw new Error('Parametri obbligatori mancanti o non validi');
+    }
+
+    const vehicles = await movolabAvailableVehicles(params, authToken);
+    return vehicles;
+  } catch (error: any) {
+    throw new Error(`Errore durante la richiesta ai veicoli disponibili: ${error.message}`);
+  }
+};

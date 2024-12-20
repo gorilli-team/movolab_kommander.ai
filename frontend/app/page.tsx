@@ -14,7 +14,7 @@ export default function Dashboard() {
 
   const messageContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const { startRecording, stopRecording, status, mediaBlobUrl } = useReactMediaRecorder({
+  const { startRecording, stopRecording } = useReactMediaRecorder({
     audio: true,
     onStop: (blobUrl, blob) => {
       setAudioFile(blob);
@@ -22,13 +22,20 @@ export default function Dashboard() {
     },
   });
 
-  const addMessage = (type: "user" | "kommander", content: string | Blob, isLoading: boolean = false) => {
+  const addMessage = (
+    type: "user" | "kommander",
+    content: string | Blob,
+    isLoading: boolean = false
+  ) => {
     setMessages((prevMessages) => [
       ...prevMessages,
       {
         type,
         content,
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
         isLoading,
       },
     ]);
@@ -36,9 +43,12 @@ export default function Dashboard() {
 
   const handleTextSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message) return;
 
-    addMessage("user", message);
+    const trimmedMessage = message.trim(); // Trimmare il messaggio
+
+    if (!trimmedMessage) return;
+
+    addMessage("user", trimmedMessage);
     setMessage("");
 
     setIsLoading(true);
@@ -48,59 +58,62 @@ export default function Dashboard() {
       const response = await fetch("http://localhost:5000/new_message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message_text: message, message_type: "text" }),
+        body: JSON.stringify({ message_text: trimmedMessage, message_type: "text" }),
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        const responseText = result.createdMessage?.parameters?.response?.responseText || "Messaggio non disponibile";
+      const result = await response.json();
+      console.log("Risultato ricevuto:", result);
 
-        
-        const availableVehicles = result.availableVehicles?.result || [];
-        setVehicles(availableVehicles);
+      const errorMessage = result.responseText || "Errore sconosciuto.";
+      const responseText =
+        result.createdMessage?.parameters?.response?.responseText || errorMessage;
 
-        let vehiclesList = "";
-        if (availableVehicles.length > 0) {
-          vehiclesList = `
-            <div class="vehicle-list">
-              <p>Scegli uno dei seguenti veicoli disponibili:</p>
-              <ul>
-                ${availableVehicles.map((vehicle: any) => `
-                  <li class="vehicle-item">
-                    <span class="vehicle-icon">🚗</span> 
-                    ${vehicle.brand?.brandName} - ${vehicle.model?.modelName}
-                  </li>`).join("")}
-              </ul>
-            </div>
-          `;
-        }
+      const availableVehicles = result.availableVehicles?.result || [];
+      const missingParameters = result.missingParameters || [];
 
-        setMessages((prevMessages) => {
-          const newMessages = [...prevMessages];
-          const lastKommanderMessage = newMessages.find((msg) => msg.type === "kommander" && msg.isLoading);
-          if (lastKommanderMessage) {
-            lastKommanderMessage.content = `${responseText}<br />${vehiclesList}`; // Aggiungi la lista dei veicoli al messaggio di Kommander
-            lastKommanderMessage.isLoading = false;
-          }
-          return newMessages;
-        });
-      } else {
-        setMessages((prevMessages) => {
-          const newMessages = [...prevMessages];
-          const lastKommanderMessage = newMessages.find((msg) => msg.type === "kommander" && msg.isLoading);
-          if (lastKommanderMessage) {
-            lastKommanderMessage.content = "Errore nella richiesta.";
-            lastKommanderMessage.isLoading = false;
-          }
-          return newMessages;
-        });
+      setVehicles(availableVehicles);
+
+      let messageContent = responseText;
+
+      if (availableVehicles.length > 0) {
+        const vehiclesList = `
+          <div class="vehicle-list">
+            <p>Scegli uno dei seguenti veicoli:</p>
+            <ul>
+              ${availableVehicles
+                .map(
+                  (vehicle: any) => `
+              <li class="vehicle-item">
+                <span class="vehicle-icon">🚗</span> 
+                ${vehicle.brand?.brandName} - ${vehicle.model?.modelName}
+              </li>`
+                )
+                .join("")}
+            </ul>
+          </div>`;
+        messageContent += `<br />${vehiclesList}`;
       }
-    } catch (error) {
+
       setMessages((prevMessages) => {
         const newMessages = [...prevMessages];
-        const lastKommanderMessage = newMessages.find((msg) => msg.type === "kommander" && msg.isLoading);
+        const lastKommanderMessage = newMessages.find(
+          (msg) => msg.type === "kommander" && msg.isLoading
+        );
         if (lastKommanderMessage) {
-          lastKommanderMessage.content = "Errore di rete o server.";
+          lastKommanderMessage.content = messageContent;
+          lastKommanderMessage.isLoading = false;
+        }
+        return newMessages;
+      });
+    } catch (error) {
+      console.error(error);
+      setMessages((prevMessages) => {
+        const newMessages = [...prevMessages];
+        const lastKommanderMessage = newMessages.find(
+          (msg) => msg.type === "kommander" && msg.isLoading
+        );
+        if (lastKommanderMessage) {
+          lastKommanderMessage.content = "Si è verificato un errore. Riprova.";
           lastKommanderMessage.isLoading = false;
         }
         return newMessages;
@@ -128,54 +141,58 @@ export default function Dashboard() {
         body: formData,
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        const responseText = result.createdMessage?.parameters?.response?.responseText || "Messaggio non disponibile";
+      const result = await response.json();
+      console.log("Risultato ricevuto:", result);
 
-        const availableVehicles = result.availableVehicles?.result || [];
-        let vehiclesList = "";
-        if (availableVehicles.length > 0) {
-          vehiclesList = `
-            <div class="vehicle-list">
-              <p>Scegli uno dei seguenti veicoli disponibili:</p>
-              <ul>
-                ${availableVehicles.map((vehicle: any) => `
-                  <li class="vehicle-item">
-                    ${vehicle.brand?.brandName} - ${vehicle.model?.modelName}
-                  </li>`).join("")}
-              </ul>
-            </div>
-          `;
-        }
+      const errorMessage = result.responseText || "Errore sconosciuto.";
+      const responseText = result.responseText || errorMessage;
 
-        const messageContent = `${responseText}<br />${vehiclesList}`;
+      const availableVehicles = result.availableVehicles?.result || [];
+      const missingParameters = result.missingParameters || [];
 
-        setMessages((prevMessages) => {
-          const newMessages = [...prevMessages];
-          const lastKommanderMessage = newMessages.find((msg) => msg.type === "kommander" && msg.isLoading);
-          if (lastKommanderMessage) {
-            lastKommanderMessage.content = messageContent;
-            lastKommanderMessage.isLoading = false;
-          }
-          return newMessages;
-        });
-      } else {
-        setMessages((prevMessages) => {
-          const newMessages = [...prevMessages];
-          const lastKommanderMessage = newMessages.find((msg) => msg.type === "kommander" && msg.isLoading);
-          if (lastKommanderMessage) {
-            lastKommanderMessage.content = "Errore nella richiesta.";
-            lastKommanderMessage.isLoading = false;
-          }
-          return newMessages;
-        });
+      setVehicles(availableVehicles);
+
+      let messageContent = responseText;
+
+      if (availableVehicles.length > 0) {
+        const vehiclesList = `
+          <div class="vehicle-list">
+            <p>Scegli uno dei seguenti veicoli:</p>
+            <ul>
+              ${availableVehicles
+                .map(
+                  (vehicle: any) => `
+              <li class="vehicle-item">
+                <span class="vehicle-icon">🚗</span> 
+                ${vehicle.brand?.brandName} - ${vehicle.model?.modelName}
+              </li>`
+                )
+                .join("")}
+            </ul>
+          </div>`;
+        messageContent += `<br />${vehiclesList}`;
       }
-    } catch (error) {
+
       setMessages((prevMessages) => {
         const newMessages = [...prevMessages];
-        const lastKommanderMessage = newMessages.find((msg) => msg.type === "kommander" && msg.isLoading);
+        const lastKommanderMessage = newMessages.find(
+          (msg) => msg.type === "kommander" && msg.isLoading
+        );
         if (lastKommanderMessage) {
-          lastKommanderMessage.content = "Errore di rete o server.";
+          lastKommanderMessage.content = messageContent;
+          lastKommanderMessage.isLoading = false;
+        }
+        return newMessages;
+      });
+    } catch (error) {
+      console.error(error);
+      setMessages((prevMessages) => {
+        const newMessages = [...prevMessages];
+        const lastKommanderMessage = newMessages.find(
+          (msg) => msg.type === "kommander" && msg.isLoading
+        );
+        if (lastKommanderMessage) {
+          lastKommanderMessage.content = "Si è verificato un errore. Riprova.";
           lastKommanderMessage.isLoading = false;
         }
         return newMessages;
@@ -197,7 +214,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (messageContainerRef.current) {
-      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+      messageContainerRef.current.scrollTop =
+        messageContainerRef.current.scrollHeight;
     }
   }, [messages]);
 
@@ -208,15 +226,9 @@ export default function Dashboard() {
           <h2 className="font-bold">Cosa vuoi fare oggi?</h2>
         </div>
 
-        <div
-          className="banner-custom-chat p-4"
-          ref={messageContainerRef} // Aggiungi il ref per il contenitore dei messaggi
-        >
+        <div className="banner-custom-chat p-4" ref={messageContainerRef}>
           {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`w-full flex ${message.type === "user" ? "" : "justify-end"}`}
-            >
+            <div key={index} className={`w-full flex ${message.type === "user" ? "" : "justify-end"}`}>
               <div className={`banner-chat-${message.type} flex`}>
                 <img
                   className="logo-kommander-chat"
@@ -275,7 +287,7 @@ export default function Dashboard() {
             <button
               className="btn-send py-2 px-4 text-sm"
               onClick={handleTextSubmit}
-              disabled={isRecording || !message}
+              disabled={isRecording || !message.trim()}
             >
               <span><i className="fa-solid fa-envelope"></i></span>
             </button>
@@ -289,6 +301,7 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
+
         <div>
           {audioFile && (
             <div className="w-full max-w-md mb-2 ml-2">
