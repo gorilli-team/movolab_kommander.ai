@@ -44,7 +44,7 @@ export default function Dashboard() {
   const handleTextSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const trimmedMessage = message.trim(); // Trimmare il messaggio
+    const trimmedMessage = message.trim(); 
 
     if (!trimmedMessage) return;
 
@@ -64,7 +64,7 @@ export default function Dashboard() {
       const result = await response.json();
       console.log("Risultato ricevuto:", result);
 
-      const errorMessage = result.responseText || "Errore sconosciuto.";
+      const errorMessage = result.responseText || "Errore di interpretazione. Riprova.";
       const responseText =
         result.createdMessage?.parameters?.response?.responseText || errorMessage;
 
@@ -144,7 +144,7 @@ export default function Dashboard() {
       const result = await response.json();
       console.log("Risultato ricevuto:", result);
 
-      const errorMessage = result.responseText || "Errore sconosciuto.";
+      const errorMessage = result.responseText || "Errore di interpretazione. Riprova.";
       const responseText = result.responseText || errorMessage;
 
       const availableVehicles = result.availableVehicles?.result || [];
@@ -257,7 +257,7 @@ export default function Dashboard() {
                 </div>
                 {message.isLoading ? (
                   <div className="w-full max-w-md mb-2 pt-2">
-                    <span className="text-bold">Kommander.ai sta pensando...</span>
+                    <span className="font-bold">Kommander.ai sta pensando...</span>
                   </div>
                 ) : (
                   <>
