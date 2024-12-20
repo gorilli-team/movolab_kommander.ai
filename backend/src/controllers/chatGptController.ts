@@ -59,7 +59,7 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
   4. Il nome del cliente.
   5. Il numero di telefono del conducente.
   6. Il numero di telefono del cliente.
-  7. Il gruppo di veicoli (id, mnemonic, description). Tendenzialmente il gruppo è rappresentato dal tipo di veicolo. Puoi anche scegliere tutti i gruppi quindi devi prenderli tutti.
+  7. Il gruppo di veicoli (id, mnemonic, description). Tendenzialmente il gruppo è rappresentato dal tipo di veicolo. Puoi anche scegliere tutti i gruppi quindi devi prenderli tutti. Se dice mostrameli tutti, prendili tutti.
   8. Il workflow (id, nome). Attenzione tra prepagato prenotazione e prepagato apertura movo.
   9. PickUpLocation (id, nome), è legato a rental location.
   10. DropOffLocation (id, nome), è legato a rental location.
@@ -68,7 +68,7 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
     =>  - ResponseText: Un messaggio indicativo riguardo l'esito della richiesta. Se manca anche solo un parametro devi scrivere errore, elencando i parametri mancanti.
         - MissingParameters: Un array dove vengo inseriti i parametri mancanti, se non mancano parametri allora l'array sarà vuoto.
 
-  Se un parametro non è presente, restituisci "null" invece di un valore predefinito come "Non fornito".
+  Se un parametro non è presente, restituisci "null" invece di un valore predefinito come "Non fornito". Non dedurre tu dei campi se non ci sono.
   
   Rispondi in formato JSON, come nell'esempio qui sotto. Non aggiungere note aggiuntive sotto il json.
   
@@ -115,7 +115,6 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
           { role: 'system', content: 'You are an assistant specialized in extracting key details from user messages.' },
           { role: 'user', content: prompt },
         ],
-        temperature: 0.2,
       },
       {
         headers: {
@@ -140,13 +139,12 @@ const parseChatGptResponse = (rawReply: string): Record<string, any> => {
   try {
     console.log('Risposta grezza da ChatGPT:', rawReply);
 
-    const sanitizedReply = rawReply.replace(/,\s*([}\]])/g, '$1').trim();
+    const sanitizedReply = rawReply.substring(rawReply.indexOf('{'), rawReply.lastIndexOf('}') + 1).trim();
 
     if (!sanitizedReply.startsWith('{') || !sanitizedReply.endsWith('}')) {
       throw new Error('La risposta non è un JSON valido.');
     }
 
-  
     const parsedReply = JSON.parse(sanitizedReply);
 
     if (typeof parsedReply !== 'object' || parsedReply === null) {
@@ -156,7 +154,7 @@ const parseChatGptResponse = (rawReply: string): Record<string, any> => {
     return parsedReply;
   } catch (error: any) {
     console.error('Errore di parsing JSON:', error.message);
-    console.error('Risposta grezza:', rawReply); 
+    console.error('Risposta grezza:', rawReply);
     throw new Error('Il JSON restituito da ChatGPT non è valido.');
   }
 };

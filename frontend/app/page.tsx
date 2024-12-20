@@ -227,39 +227,57 @@ export default function Dashboard() {
         </div>
 
         <div className="banner-custom-chat p-4" ref={messageContainerRef}>
-          {messages.map((message, index) => (
-            <div key={index} className={`w-full flex ${message.type === "user" ? "" : "justify-end"}`}>
-              <div className={`banner-chat-${message.type} flex`}>
+        {messages.map((message, index) => (
+          <div key={index} className={`w-full flex ${message.type === "user" ? "" : "justify-end"}`}>
+            <div className={`banner-chat-${message.type} flex`}>
+              {message.type === "user" && (
                 <img
                   className="logo-kommander-chat"
-                  src={message.type === "user" ? "./spiaggia-tramonto.png" : "./kommander-logo.png"}
-                  alt={`${message.type}-icon`}
+                  src="./spiaggia-tramonto.png"
+                  alt="user-icon"
                 />
-                <div>
-                  <div className="info-message-div">
-                    <span className="font-bold type-user">
-                      {message.type === "user" ? "User" : "Kommander.ai"}
-                    </span>
-                    <span className="hour-message">{message.time}</span>
-                  </div>
-                  {message.type === "user" && message.content instanceof Blob ? (
-                    <div className="w-full max-w-md mb-2 pt-2">
-                      <audio controls src={URL.createObjectURL(message.content)} />
-                    </div>
-                  ) : message.type === "kommander" && message.isLoading ? (
-                    <div className="w-full max-w-md mb-2 pt-2">
-                      <Spinner aria-label="Caricamento risposta" />
-                    </div>
-                  ) : (
-                    <div
-                      className="message pt-1"
-                      dangerouslySetInnerHTML={{ __html: message.content }}
-                    />
+              )}
+              {message.type === "kommander" && !message.isLoading && (
+                <img
+                  className="logo-kommander-chat"
+                  src="./kommander-logo.png"
+                  alt="kommander-icon"
+                />
+              )}
+              <div>
+                <div className="info-message-div">
+                  {!message.isLoading && (
+                    <>
+                      <span className="font-bold type-user">
+                        {message.type === "user" ? "User" : "Kommander.ai"}
+                      </span>
+                      <span className="hour-message">{message.time}</span>
+                    </>
                   )}
                 </div>
+                {message.isLoading ? (
+                  <div className="w-full max-w-md mb-2 pt-2">
+                    <span className="text-bold">Kommander.ai sta pensando...</span>
+                  </div>
+                ) : (
+                  <>
+                    {message.type === "user" && message.content instanceof Blob ? (
+                      <div className="w-full max-w-md mb-2 pt-2">
+                        <audio controls src={URL.createObjectURL(message.content)} />
+                      </div>
+                    ) : (
+                      <div
+                        className="message pt-1"
+                        dangerouslySetInnerHTML={{ __html: message.content }}
+                      />
+                    )}
+                  </>
+                )}
               </div>
             </div>
-          ))}
+          </div>
+        ))}
+
         </div>
 
         <div className="banner-custom-footer flex w-full items-center justify-between border-t border-gray-200 bg-gray-50 p-4">
