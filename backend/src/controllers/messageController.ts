@@ -4,6 +4,7 @@ import { callChatGpt } from './chatGptController';
 import { movolabAvailableVehicles } from './movolabController';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import { addMessageToStore } from '../store/messageStore';
 
 dotenv.config();
 
@@ -42,6 +43,8 @@ export const createMessage = async (req: Request, res: Response) => {
     });
 
     console.log('Message saved successfully:', message);
+
+    addMessageToStore(message_text);
 
     const gptResponse = await callChatGpt(message_text);
     console.log('GPT Response:', gptResponse);

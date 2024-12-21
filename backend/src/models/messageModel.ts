@@ -43,35 +43,39 @@ const MessageSchema: Schema = new Schema(
     parameters: {
       type: new Schema(
         {
-          pickUpDate: { type: Date },
-          dropOffDate: { type: Date },
-          driver_name: { type: String },
-          customer_name: { type: String },
-          driver_phone: { type: String },
-          customer_phone: { type: String },
+          pickUpDate: { type: Date, default: null },
+          dropOffDate: { type: Date, default: null },
+          driver_name: { type: String, default: null },
+          customer_name: { type: String, default: null },
+          driver_phone: { type: String, default: null },
+          customer_phone: { type: String, default: null },
           group: [
             {
-              _id: { type: Schema.Types.ObjectId, ref: 'Group' },
-              mnemonic: { type: String },
-              description: { type: String },
+              _id: { type: Schema.Types.ObjectId, ref: 'Group', default: null },
+              mnemonic: { type: String, default: null },
+              description: { type: String, default: null },
             },
           ],
           workflow: {
-            _id: { type: Schema.Types.ObjectId, ref: 'Workflow' },
-            name: { type: String },
+            _id: {
+              type: mongoose.Schema.Types.ObjectId,
+              ref: 'Workflow',
+              default: null,
+            },
+            name: { type: String, default: null },
           },
           pickUpLocation: {
-            _id: { type: Schema.Types.ObjectId, ref: 'Location' },
-            name: { type: String },
+            _id: { type: Schema.Types.ObjectId, ref: 'Location', default: null },
+            name: { type: String, default: null},
           },
           dropOffLocation: {
-            _id: { type: Schema.Types.ObjectId, ref: 'Location' },
-            name: { type: String },
+            _id: { type: Schema.Types.ObjectId, ref: 'Location', default: null },
+            name: { type: String, default: null },
           },
           movementType: {
-            _id: { type: Schema.Types.ObjectId, ref: 'Movement' },
-            enum: { type: String },
-            name: { type: String },
+            _id: { type: Schema.Types.ObjectId, ref: 'Movement', default: null},
+            enum: { type: String, default: null },
+            name: { type: String, default: null },
           },
           response: {
             _id: { type: Schema.Types.ObjectId, ref: 'Response' },
