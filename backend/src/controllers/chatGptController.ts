@@ -1,5 +1,6 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
+import { availableVehiclesStore } from '../store/messageStore';
 
 
 dotenv.config();
@@ -158,4 +159,68 @@ const parseChatGptResponse = (rawReply: string): Record<string, any> => {
     throw new Error('Il JSON restituito da ChatGPT non è valido.');
   }
 };
+
+export const selectVehicle = async (userText: string): Promise<Record<string, any>> => {
+
+  const availableVehicles = availableVehiclesStore;
+
+  const availableVehiclesJson = JSON.stringify(availableVehicles);
+
+  const prompt = `
+    In base al messaggio dell'utente: "${userText}", che è la selezione di un veicolo, devi restituirmi il veicolo adatto tra quelli presenti nell'oggetto fornito "availableVehicles".
+    Devi guardare dentro ${availableVehiclesJson}, un oggetto di questi è il veicolo che devi prendere e di cui devi restituire le seguenti informazioni come riportate nel JSON sotto.
+
+    Rispondi nel seguente formato JSON:
+    {
+      "selectedVehicle": {
+        "_id": "id del veicolo selezionato",
+        "targa": "targa del veicolo selezionato",
+        "brand": "nome del brand",
+        "model": "nome del modello",
+        "responseText": "Hai scelto il veicolo ... devi dire qualcosa sul veicolo scelto, ovvero targa, brand, model"
+      }
+    }
+
+    Se non puoi selezionare un veicolo valido, restituisci:
+    {
+      "selectedVehicle": {
+        "_id": null,
+        "targa": null,
+        "brand": null,
+        "model": null,
+        "responseText": "Messaggio che indica che non è stato possibile selezionare un veicolo."
+      }
+    }
+
+    Devo solo rispondere con il JSON, non con altre frasi aggiuntive.
+  `;
+
+  try {
+    const response = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model: 'gpt-4',
+        messages: [
+          { role: 'system', content: 'You are an assistant specialized in selecting vehicles based on user input.' },
+          { role: 'user', content: prompt },
+        ],
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+      }
+    );
+
+    const rawReply = response.data.choices[0].message.content;
+    console.log("response scelta: ", rawReply);
+
+    return parseChatGptResponse(rawReply);
+  } catch (error: any) {
+    console.error('Errore nella chiamata a ChatGPT:', error.message);
+    throw new Error('Errore nella chiamata a ChatGPT. Controlla i log.');
+  }
+};
+
 

@@ -8,10 +8,10 @@ import axios from 'axios';
 import FormData from 'form-data';
 import dotenv from 'dotenv';
 import Message from '../models/messageModel';
-import { callChatGpt } from './chatGptController';
+import { callChatGpt, selectVehicle } from './chatGptController';
 import { movolabAvailableVehicles } from './movolabController';
 import mongoose from 'mongoose';
-import { addMessageToStore } from '../store/messageStore';
+import { addMessageToStore, addAvailableVehiclesToStore } from '../store/messageStore';
 
 dotenv.config();
 
@@ -209,8 +209,57 @@ const fetchAvailableVehicles = async (params: any, authToken: string) => {
     }
 
     const vehicles = await movolabAvailableVehicles(params, authToken);
+    addAvailableVehiclesToStore(vehicles);
     return vehicles;
   } catch (error: any) {
     throw new Error(`Errore durante la richiesta ai veicoli disponibili: ${error.message}`);
   }
+};
+
+export const chooseVehicleAudio = (req: Request, res: Response) => {
+  upload.single('audio')(req, res, async (err: any) => {
+    if (err) {
+      return handleErrorResponse(res, err, 400);
+    }
+
+    if (!req.file) {
+      return handleErrorResponse(res, new Error('No audio file uploaded'), 400);
+    }
+
+    const { availableVehicles } = req.body; 
+
+    if (!availableVehicles || availableVehicles.length === 0) {
+      return res.status(400).json({ error: 'No available vehicles provided.' });
+    }
+
+    const uploadedFilePath = path.join(uploadsDirectory, req.file.filename);
+
+    try {
+      
+      let processedFilePath = uploadedFilePath;
+      if (path.extname(uploadedFilePath) === '.wav') {
+        const outputFilePath = path.join(uploadsDirectory, `${Date.now()}.mp3`);
+        await convertAudioFile(uploadedFilePath, outputFilePath);
+        processedFilePath = outputFilePath;
+      }
+
+      const transcription = await transcribeFileWithWhisper(processedFilePath);
+
+      addMessageToStore(transcription);
+
+      const gptResponseSelection = await selectVehicle(transcription);
+
+      console.log('Selezione veicolo:', gptResponseSelection);
+
+      if (fs.existsSync(uploadedFilePath)) fs.unlinkSync(uploadedFilePath);
+      if (fs.existsSync(processedFilePath)) fs.unlinkSync(processedFilePath);
+
+      res.status(201).json({
+        transcription,
+        selectionVehicle: gptResponseSelection,
+      });
+    } catch (error) {
+      handleErrorResponse(res, error);
+    }
+  });
 };

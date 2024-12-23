@@ -2,7 +2,6 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useReactMediaRecorder } from "react-media-recorder";
-import { Spinner } from "flowbite-react";
 
 export default function Dashboard() {
   const [message, setMessage] = useState<string>("");
@@ -85,7 +84,7 @@ export default function Dashboard() {
                   (vehicle: any) => `
               <li class="vehicle-item">
                 <span class="vehicle-icon">🚗</span> 
-                ${vehicle.brand?.brandName} - ${vehicle.model?.modelName}
+                ${vehicle.plate} - ${vehicle.brand?.brandName} - ${vehicle.model?.modelName}
               </li>`
                 )
                 .join("")}
@@ -164,7 +163,7 @@ export default function Dashboard() {
                   (vehicle: any) => `
               <li class="vehicle-item">
                 <span class="vehicle-icon">🚗</span> 
-                ${vehicle.brand?.brandName} - ${vehicle.model?.modelName}
+                ${vehicle.plate} - ${vehicle.brand?.brandName} - ${vehicle.model?.modelName}
               </li>`
                 )
                 .join("")}
@@ -219,6 +218,136 @@ export default function Dashboard() {
     }
   }, [messages]);
 
+  const handleTextButtonClick = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (vehicles.length > 0) {
+      chooseVehicleMessage(e);
+      setMessage("");
+    } else {
+      handleTextSubmit(e);
+    }
+  };
+  
+  const handleAudioButtonClick = () => {
+    if (vehicles.length > 0) {
+      if (audioFile) {
+        chooseVehicleAudio();
+        setAudioFile(null);
+      }
+    } else {
+      handleAudioSubmit();
+    }
+  };
+
+
+  const chooseVehicleMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmedMessage = message.trim(); 
+  
+    if (!trimmedMessage) return;
+  
+    addMessage("user", trimmedMessage);
+    setMessage("");
+  
+    setIsLoading(true);
+    addMessage("kommander", "", true);
+  
+    if (vehicles.length > 0) {
+      try {
+        const response = await fetch("http://localhost:5000/choose_vehicle_message", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message_text: trimmedMessage, message_type: "text", availableVehicles: vehicles }),
+        });
+  
+        const result = await response.json();
+        console.log("Risultato:", result);
+        const responseText = result.selectionVehicle.selectedVehicle.responseText || "Errore di interpretazione. Riprova.";
+  
+        setMessages((prevMessages) => {
+          const newMessages = [...prevMessages];
+          const lastKommanderMessage = newMessages.find(
+            (msg) => msg.type === "kommander" && msg.isLoading
+          );
+          if (lastKommanderMessage) {
+            lastKommanderMessage.content = responseText;
+            lastKommanderMessage.isLoading = false;
+          }
+          return newMessages;
+        });
+      } catch (error) {
+        console.error("Errore:", error);
+        setMessages((prevMessages) => {
+          const newMessages = [...prevMessages];
+          const lastKommanderMessage = newMessages.find(
+            (msg) => msg.type === "kommander" && msg.isLoading
+          );
+          if (lastKommanderMessage) {
+            lastKommanderMessage.content = "Si è verificato un errore. Riprova.";
+            lastKommanderMessage.isLoading = false;
+          }
+          return newMessages;
+        });
+      }
+    } else {
+      setIsLoading(false);
+    }
+  };
+  
+  const chooseVehicleAudio = async () => {
+    if (!audioFile) return;
+    addMessage("user", audioFile);
+    setAudioFile(null);
+  
+    setIsLoading(true);
+    addMessage("kommander", "", true);
+  
+    if (vehicles.length > 0) {
+      try {
+        const formData = new FormData();
+        formData.append("audio", audioFile, "audioMessage.wav");
+        formData.append("availableVehicles", JSON.stringify(vehicles));
+  
+        const response = await fetch("http://localhost:5000/choose_vehicle_audio", {
+          method: "POST",
+          body: formData,
+        });
+  
+        const result = await response.json();
+        console.log("Risultato:", result);
+  
+        const responseText = result.selectionVehicle.selectedVehicle.responseText || "Errore di interpretazione. Riprova.";
+        setMessages((prevMessages) => {
+          const newMessages = [...prevMessages];
+          const lastKommanderMessage = newMessages.find(
+            (msg) => msg.type === "kommander" && msg.isLoading
+          );
+          if (lastKommanderMessage) {
+            lastKommanderMessage.content = responseText;
+            lastKommanderMessage.isLoading = false;
+          }
+          return newMessages;
+        });
+      } catch (error) {
+        console.error("Errore:", error);
+        setMessages((prevMessages) => {
+          const newMessages = [...prevMessages];
+          const lastKommanderMessage = newMessages.find(
+            (msg) => msg.type === "kommander" && msg.isLoading
+          );
+          if (lastKommanderMessage) {
+            lastKommanderMessage.content = "Si è verificato un errore. Riprova.";
+            lastKommanderMessage.isLoading = false;
+          }
+          return newMessages;
+        });
+      }
+    } else {
+      setIsLoading(false);
+    }
+  };
+  
+    
   return (
     <div className="overflow-auto flex w-full h-screen justify-center items-center bg-gray-100">
       <div className="widget-custom rounded-lg shadow-lg bg-white">
@@ -304,7 +433,7 @@ export default function Dashboard() {
           <div className="flex flex-col buttons-div items-center w-full space-y-2">
             <button
               className="btn-send py-2 px-4 text-sm"
-              onClick={handleTextSubmit}
+              onClick={handleTextButtonClick}
               disabled={isRecording || !message.trim()}
             >
               <span><i className="fa-solid fa-envelope"></i></span>
@@ -312,7 +441,7 @@ export default function Dashboard() {
 
             <button
               className="btn-send py-2 px-4 text-sm"
-              onClick={handleAudioSubmit}
+              onClick={handleAudioButtonClick}
               disabled={isRecording || !audioFile}
             >
               <span><i className="fa-solid fa-volume-high"></i></span>

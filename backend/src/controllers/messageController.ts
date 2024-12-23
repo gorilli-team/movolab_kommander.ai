@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import Message from '../models/messageModel';
-import { callChatGpt } from './chatGptController';
+import { callChatGpt, selectVehicle } from './chatGptController';
 import { movolabAvailableVehicles } from './movolabController';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-import { addMessageToStore } from '../store/messageStore';
+import { addMessageToStore, addAvailableVehiclesToStore } from '../store/messageStore';
 
 dotenv.config();
 
@@ -89,6 +89,7 @@ export const createMessage = async (req: Request, res: Response) => {
 
     console.log("Veicoli disponibili: ", availableVehicles);
 
+
     res.status(201).json({
       responseText: gptMessageResponse.responseText,
       createdMessage: message,
@@ -100,6 +101,27 @@ export const createMessage = async (req: Request, res: Response) => {
 };
 
 
+export const chooseVehicleText = async (req: Request, res: Response) => {
+  const { message_text, message_type, availableVehicles } = req.body;
+
+  try {
+    if (!availableVehicles || availableVehicles.length === 0) {
+      return res.status(400).json({ error: "No available vehicles provided." });
+    }
+
+    addMessageToStore(message_text);
+
+    const gptResponseSelection = await selectVehicle(message_text);
+
+    console.log("Selezione veicolo:", gptResponseSelection);
+
+    res.status(201).json({
+      selectionVehicle: gptResponseSelection,
+    });
+  } catch (error) {
+    handleErrorResponse(res, error, 400);
+  }
+};
 
 
 const fetchAvailableVehicles = async (params: any, authToken: string) => {
@@ -123,6 +145,8 @@ const fetchAvailableVehicles = async (params: any, authToken: string) => {
 
 
     const vehicles = await movolabAvailableVehicles(params, authToken);
+    addAvailableVehiclesToStore(vehicles);
+
     return vehicles;
 
   } catch (error: any) {
