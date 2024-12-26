@@ -6,7 +6,7 @@ import { HiInformationCircle } from "react-icons/hi";
 import { Alert } from "flowbite-react";
 
 export default function Dashboard() {
-  const [isModalOpen, setIsModalOpen] = useState(true); 
+  const [isModalOpen, setIsModalOpen] = useState(true);
   const [message, setMessage] = useState<string>("");
   const [audioFile, setAudioFile] = useState<Blob | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -351,169 +351,153 @@ export default function Dashboard() {
     }
   };
 
-  const handleNewConversation = async () => {
+  
+  const handleNewConversation = async () => { 
+      setIsModalOpen(false);
+      setIsConfirmationOpen(false);
     
-    setIsModalOpen(false);
-    setIsConfirmationOpen(false);
-  
-    try {
-      
-      const response = await fetch("http://localhost:5000/create_conversation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      });
-  
-      const result = await response.json();
-      console.log("Conversazione creata con successo:", result);
-  
-    } catch (error) {
-      console.error("Errore durante la creazione della conversazione:", error);
-    }
-  };
-
-  const handleConfirmExit = () => {
-    setIsConfirmationOpen(true);
-  };
-
-  const handleCloseConfirmation = () => {
-    setIsConfirmationOpen(false);
-  };
-
-  const handleConfirmationYes = () => {
+       try {
+   
+         const response = await fetch("http://localhost:5000/create_conversation", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" }
+       });
     
-    setIsConfirmationOpen(false);
-    setIsModalOpen(true);
-  };
-
-  const handleConfirmationNo = () => {
-
-    setIsConfirmationOpen(false);
-  };
-  
-  
+        const result = await response.json();
+        console.log("Conversazione creata con successo:", result);
+    
+      } catch (error) {
+        console.error("Errore durante la creazione della conversazione:", error);
+        }
+      };
+    
+      const handleConfirmExit = () => {
+       setIsConfirmationOpen(true);
+      };
+    
+      const handleCloseConfirmation = () => {
+        setIsConfirmationOpen(false);
+      };
+    
+      const handleConfirmationYes = () => {
+       setIsConfirmationOpen(false);
+       setIsModalOpen(true);
+      };
+    
+      const handleConfirmationNo = () => {
+    
+      setIsConfirmationOpen(false);
+     };
+    
     
   return (
-    <div className="overflow-auto flex w-full h-screen justify-center items-center bg-gray-100 relative">
-      {isModalOpen && (
-        <div className="absolute inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-            <button
-              onClick={handleNewConversation}
-              className="btn-send py-2 px-4 text-sm"
-            >
-              Nuova conversazione
-            </button>
-          </div>
-        </div>
-      )}
+    <div className="overflow-auto flex w-full h-screen justify-center items-center bg-gray-100">
+           {isModalOpen && (
+     <div className="absolute inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+     <div className="bg-white rounded-lg shadow-lg p-6 text-center">
+     <button
+     onClick={handleNewConversation}
+     className="btn-send py-2 px-4 text-sm"
+     >
+     Nuova conversazione
+     </button>
+     </div>
+     </div>
+     )}
 
-      {isConfirmationOpen && (
-        <div className="absolute inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="rounded-lg shadow-lg p-6 text-center">
-            <Alert
-              color="warning"
-              rounded
-            >
-              <span className="font-medium">Sei sicuro di voler chiudere questa conversazione?</span>
-              <div className="flex space-x-2 mt-2">
-                <button
-                  className="btn-send py-2 px-4 text-sm bg-green-500"
-                  onClick={handleConfirmationYes}
-                >
-                  Sì
-                </button>
-                <button
-                  className="btn-send py-2 px-4 text-sm bg-red-500"
-                  onClick={handleConfirmationNo}
-                >
-                  No
-                </button>
-              </div>
-            </Alert>
-          </div>
-        </div>
-      )}
+     {isConfirmationOpen && (
+     <div className="absolute inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+     <div className="rounded-lg shadow-lg p-6 text-center">
+     <Alert
+     color="warning"
+     rounded
+     >
+     <span className="font-medium">Sei sicuro di voler chiudere questa conversazione?</span>
+     <div className="flex space-x-2 mt-2">
+     <button
+     className="btn-send py-2 px-4 text-sm bg-green-500"
+     onClick={handleConfirmationYes}
+     >
+     Sì
+     </button>
+     <button
+     className="btn-send py-2 px-4 text-sm bg-red-500"
+     onClick={handleConfirmationNo}
+     >
+     No
+     </button>
+    </div>
+     </Alert>
+     </div>
+     </div>
+     )}
 
-      <div
-        className={`widget-custom rounded-lg shadow-lg bg-white ${
-          isModalOpen ? "pointer-events-none opacity-50" : ""
-        }`}
-      >
-
+    <div
+     className={`widget-custom rounded-lg shadow-lg bg-white ${
+    isModalOpen ? "pointer-events-none opacity-50" : ""
+    }`}
+    >
         <div className="banner-custom-title flex items-center justify-between border-b border-gray-200 bg-gray-50 p-4">
           <h2 className="font-bold">Cosa vuoi fare oggi?</h2>
           <button
             onClick={handleConfirmExit}
             className="text-gray-600 hover:text-blue-500"
-          >
-            <i className="fa-regular fa-circle-xmark text-xl"></i>
-          </button>
-        </div>
-
+           >
+          <i className="fa-regular fa-circle-xmark text-xl"></i>
+           </button>
+        </div>    
         <div className="banner-custom-chat p-4" ref={messageContainerRef}>
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`w-full flex ${
-                message.type === "user" ? "" : "justify-end"
-              }`}
-            >
-              <div className={`banner-chat-${message.type} flex`}>
-                {message.type === "user" && (
-                  <img
-                    className="logo-kommander-chat"
-                    src="./spiaggia-tramonto.png"
-                    alt="user-icon"
-                  />
-                )}
-                {message.type === "kommander" && !message.isLoading && (
-                  <img
-                    className="logo-kommander-chat"
-                    src="./kommander-logo.png"
-                    alt="kommander-icon"
-                  />
-                )}
-                <div>
-                  <div className="info-message-div">
-                    {!message.isLoading && (
-                      <>
-                        <span className="font-bold type-user">
-                          {message.type === "user" ? "User" : "Kommander.ai"}
-                        </span>
-                        <span className="hour-message">{message.time}</span>
-                      </>
-                    )}
-                  </div>
-                  {message.isLoading ? (
-                    <div className="w-full max-w-md mb-2 pt-2">
-                      <span className="font-bold">
-                        Kommander.ai sta pensando...
-                      </span>
-                    </div>
-                  ) : (
+        {messages.map((message, index) => (
+          <div key={index} className={`w-full flex ${message.type === "user" ? "" : "justify-end"}`}>
+            <div className={`banner-chat-${message.type} flex`}>
+              {message.type === "user" && (
+                <img
+                  className="logo-kommander-chat"
+                  src="./spiaggia-tramonto.png"
+                  alt="user-icon"
+                />
+              )}
+              {message.type === "kommander" && !message.isLoading && (
+                <img
+                  className="logo-kommander-chat"
+                  src="./kommander-logo.png"
+                  alt="kommander-icon"
+                />
+              )}
+              <div>
+                <div className="info-message-div">
+                  {!message.isLoading && (
                     <>
-                      {message.type === "user" &&
-                      message.content instanceof Blob ? (
-                        <div className="w-full max-w-md mb-2 pt-2">
-                          <audio
-                            controls
-                            src={URL.createObjectURL(message.content)}
-                          />
-                        </div>
-                      ) : (
-                        <div
-                          className="message pt-1"
-                          dangerouslySetInnerHTML={{
-                            __html: message.content,
-                          }}
-                        />
-                      )}
+                      <span className="font-bold type-user">
+                        {message.type === "user" ? "User" : "Kommander.ai"}
+                      </span>
+                      <span className="hour-message">{message.time}</span>
                     </>
                   )}
                 </div>
+                {message.isLoading ? (
+                  <div className="w-full max-w-md mb-2 pt-2">
+                    <span className="font-bold">Kommander.ai sta pensando...</span>
+                  </div>
+                ) : (
+                  <>
+                    {message.type === "user" && message.content instanceof Blob ? (
+                      <div className="w-full max-w-md mb-2 pt-2">
+                        <audio controls src={URL.createObjectURL(message.content)} />
+                      </div>
+                    ) : (
+                      <div
+                        className="message pt-1"
+                        dangerouslySetInnerHTML={{ __html: message.content }}
+                      />
+                    )}
+                  </>
+                )}
               </div>
             </div>
-          ))}
+          </div>
+        ))}
+
         </div>
 
         <div className="banner-custom-footer flex w-full items-center justify-between border-t border-gray-200 bg-gray-50 p-4">
@@ -527,10 +511,7 @@ export default function Dashboard() {
             />
             <button
               className="btn-microphone ml-2 text-gray-600 hover:text-blue-500 focus:outline-none"
-              onClick={() => {
-                if (isRecording) stopRecording();
-                else startRecording();
-              }}
+              onClick={handleMicrophoneClick}
             >
               {isRecording ? (
                 <i className="fa-regular fa-circle-stop text-xl"></i>
@@ -543,22 +524,18 @@ export default function Dashboard() {
           <div className="flex flex-col buttons-div items-center w-full space-y-2">
             <button
               className="btn-send py-2 px-4 text-sm"
-              onClick={() => {}}
+              onClick={handleTextButtonClick}
               disabled={isRecording || !message.trim()}
             >
-              <span>
-                <i className="fa-solid fa-envelope"></i>
-              </span>
+              <span><i className="fa-solid fa-envelope"></i></span>
             </button>
 
             <button
               className="btn-send py-2 px-4 text-sm"
-              onClick={() => {}}
+              onClick={handleAudioButtonClick}
               disabled={isRecording || !audioFile}
             >
-              <span>
-                <i className="fa-solid fa-volume-high"></i>
-              </span>
+              <span><i className="fa-solid fa-volume-high"></i></span>
             </button>
           </div>
         </div>
