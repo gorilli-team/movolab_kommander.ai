@@ -1,16 +1,16 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface Conversation extends Document {
-  conversation_id: mongoose.Types.ObjectId;
+  conversation_number: number;
+  status: 'completed' | 'incompleted';
   messages: mongoose.Types.ObjectId[];
-  responses: mongoose.Types.ObjectId[];
 }
 
 const ConversationSchema: Schema = new Schema(
   {
-    conversation_id: { type: Schema.Types.ObjectId, required: true, unique: true },
+    conversation_number: { type: Number, required: true, default: 1 },
+    status: { type: String, enum: ['completed', 'incompleted'], required: true, default: 'incompleted' },
     messages: [{ type: Schema.Types.ObjectId, ref: 'Message' }],
-    responses: [{ type: Schema.Types.ObjectId, ref: 'Response' }],
   },
   {
     timestamps: true,
@@ -18,8 +18,18 @@ const ConversationSchema: Schema = new Schema(
   }
 );
 
+
+ConversationSchema.pre('save', async function (next) {
+  if (this.isNew) {
+    const lastConversation = await mongoose.models.Conversation.findOne().sort({ conversation_number: -1 }).limit(1);
+    if (lastConversation) {
+      this.conversation_number = lastConversation.conversation_number + 1;
+    }
+  }
+  next();
+});
+
 const ConversationModel =
-  mongoose.models.Conversation ||
-  mongoose.model<Conversation>('Conversation', ConversationSchema);
+  mongoose.models.Conversation || mongoose.model<Conversation>('Conversation', ConversationSchema);
 
 export default ConversationModel;

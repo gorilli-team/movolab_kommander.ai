@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import { chooseVehicleAudio, uploadAudio } from './controllers/saveAudioController';
 import { getMessages, createMessage, chooseVehicleText} from './controllers/messageController';
+import { createConversation } from './controllers/conversationController';
 
 const app = express();
 
@@ -38,6 +39,16 @@ app.post('/choose_vehicle_message', async (req: Request, res: Response, next: Ne
     next(error);
   }
 });
+
+
+app.post('/create_conversation', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await createConversation(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
 
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
