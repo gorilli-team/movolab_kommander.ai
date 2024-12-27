@@ -5,6 +5,7 @@ import { movolabAvailableVehicles } from './movolabController';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { addMessageToStore, addAvailableVehiclesToStore } from '../store/messageStore';
+import ConversationModel from '../models/conversationModel';
 
 dotenv.config();
 
@@ -24,21 +25,36 @@ export const getMessages = async (req: Request, res: Response) => {
 };
 
 export const createMessage = async (req: Request, res: Response) => {
-  const { message_text, message_type } = req.body;
+  const { message_text, message_type, conversation_id } = req.body;
 
   try {
-    const responseId = new mongoose.Types.ObjectId(); 
-    const conversationId = new mongoose.Types.ObjectId(); 
-    const conversationNumber = 1;
-    const status = 'incompleted';
+    let conversation;
+
+    if (conversation_id) {
+      conversation = await ConversationModel.findById(conversation_id);
+
+      if (!conversation) {
+        return res.status(404).json({
+          error: 'La conversazione specificata non esiste.',
+        });
+      }
+    } else {
+      conversation = await ConversationModel.findOne().sort({ createdAt: -1 });
+
+      if (!conversation) {
+        return res.status(404).json({
+          error: 'Nessuna conversazione trovata. Creane una nuova prima di inviare messaggi.',
+        });
+      }
+    }
 
     const message = new Message({
       message_text,
       message_type,
       conversation: {
-        conversationId,
-        conversationNumber,
-        status,
+        conversationId: conversation._id,
+        conversationNumber: conversation.conversation_number,
+        status: conversation.status,
       },
     });
 
@@ -48,7 +64,8 @@ export const createMessage = async (req: Request, res: Response) => {
 
     const gptResponse = await callChatGpt(message_text);
     console.log('GPT Response:', gptResponse);
-    
+
+    const responseId = new mongoose.Types.ObjectId();
     const gptMessageResponse = {
       _id: responseId,
       responseText: gptResponse.response.responseText,
@@ -57,13 +74,13 @@ export const createMessage = async (req: Request, res: Response) => {
 
     message.parameters = {
       ...gptResponse,
-      response: gptMessageResponse, 
+      response: gptMessageResponse,
     };
 
     await message.save();
 
     const { pickUpDate, dropOffDate, pickUpLocation, dropOffLocation, group, movementType, workflow } = gptResponse;
-    
+
     if (gptResponse.response.missingParameters.length > 0) {
       return res.status(400).json({
         missingParameters: gptResponse.response.missingParameters,
@@ -76,29 +93,34 @@ export const createMessage = async (req: Request, res: Response) => {
       throw new Error('MOVOLAB_AUTH_TOKEN non definito nell\'env');
     }
 
-    const availableVehicles = await fetchAvailableVehicles({
-      pickUpDate,
-      dropOffDate,
-      pickUpLocation,
-      dropOffLocation,
-      group,
-      movementType,
-      workflow,
-      response: gptMessageResponse,
-    }, authToken);
+    const availableVehicles = await fetchAvailableVehicles(
+      {
+        pickUpDate,
+        dropOffDate,
+        pickUpLocation,
+        dropOffLocation,
+        group,
+        movementType,
+        workflow,
+        response: gptMessageResponse,
+      },
+      authToken
+    );
 
-    console.log("Veicoli disponibili: ", availableVehicles);
-
+    console.log('Veicoli disponibili: ', availableVehicles);
 
     res.status(201).json({
       responseText: gptMessageResponse.responseText,
       createdMessage: message,
       availableVehicles: availableVehicles,
+      conversationId: conversation._id,
+      conversationNumber: conversation.conversation_number,
     });
   } catch (error) {
     handleErrorResponse(res, error, 400);
   }
 };
+
 
 
 export const chooseVehicleText = async (req: Request, res: Response) => {

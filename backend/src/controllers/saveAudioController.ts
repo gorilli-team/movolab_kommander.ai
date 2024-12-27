@@ -12,6 +12,7 @@ import { callChatGpt, selectVehicle } from './chatGptController';
 import { movolabAvailableVehicles } from './movolabController';
 import mongoose from 'mongoose';
 import { addMessageToStore, addAvailableVehiclesToStore } from '../store/messageStore';
+import ConversationModel from '../models/conversationModel';
 
 dotenv.config();
 
@@ -121,22 +122,28 @@ const createMessageWithAnalysis = async (transcription: string, res: Response) =
   let responseSent = false;
 
   try {
-    const conversationId = new mongoose.Types.ObjectId();
-    const conversationNumber = 1;
-    const status = 'incompleted';
+    let conversation;
+
+    conversation = await ConversationModel.findOne().sort({ createdAt: -1 });
+
+    if (!conversation) {
+      return res.status(404).json({
+        error: 'Nessuna conversazione trovata. Creane una nuova prima di inviare messaggi.',
+      });
+    }
 
     const message = new Message({
       message_text: transcription,
       message_type: 'audio',
       conversation: {
-        conversationId,
-        conversationNumber,
-        status,
+        conversationId: conversation._id,
+        conversationNumber: conversation.conversation_number,
+        status: conversation.status,
       },
     });
 
     addMessageToStore(transcription);
-    
+
     const gptResponse = await callChatGpt(transcription);
     const responseId = new mongoose.Types.ObjectId();
 
@@ -192,6 +199,7 @@ const createMessageWithAnalysis = async (transcription: string, res: Response) =
     }
   }
 };
+
 
 
 const fetchAvailableVehicles = async (params: any, authToken: string) => {

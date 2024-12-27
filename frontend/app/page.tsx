@@ -355,6 +355,8 @@ export default function Dashboard() {
   const handleNewConversation = async () => { 
       setIsModalOpen(false);
       setIsConfirmationOpen(false);
+
+      setMessages([]);
     
        try {
    
@@ -407,7 +409,7 @@ export default function Dashboard() {
 
      {isConfirmationOpen && (
      <div className="absolute inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-     <div className="rounded-lg shadow-lg p-6 text-center">
+     <div className="rounded-lg p-6 text-center">
      <Alert
      color="warning"
      rounded

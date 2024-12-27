@@ -36,7 +36,7 @@ const MessageSchema: Schema = new Schema(
     message_text: { type: String, required: true },
     message_type: { type: String, enum: ['audio', 'text'], required: true },
     conversation: {
-      conversationId: { type: Schema.Types.ObjectId, required: true },
+      conversationId: { type: Schema.Types.ObjectId, ref: 'Conversation', required: true },
       conversationNumber: { type: Number, required: true },
       status: { type: String, enum: ['completed', 'incompleted'], required: true },
     },

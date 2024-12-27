@@ -3,14 +3,14 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface Conversation extends Document {
   conversation_number: number;
   status: 'completed' | 'incompleted';
-  messages: mongoose.Types.ObjectId[];
+  // messages: mongoose.Types.ObjectId[];
 }
 
 const ConversationSchema: Schema = new Schema(
   {
     conversation_number: { type: Number, required: true, default: 1 },
     status: { type: String, enum: ['completed', 'incompleted'], required: true, default: 'incompleted' },
-    messages: [{ type: Schema.Types.ObjectId, ref: 'Message' }],
+    // messages: [{ type: Schema.Types.ObjectId, ref: 'Message' }],
   },
   {
     timestamps: true,
