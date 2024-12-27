@@ -5,7 +5,6 @@ let isFirstMessage = true;
 export let availableVehiclesStore: any[] = [];
 let isAvailableVehiclesSet = false;
 
-// Add message to store
 export const addMessageToStore = (message: string) => {
   if (isFirstMessage) {
     firstMessage = message;
@@ -27,8 +26,9 @@ export const addAvailableVehiclesToStore = (vehicles: any[]) => {
   availableVehiclesStore = vehicles;
   isAvailableVehiclesSet = true;
 
-  console.log("Available Vehicles:", availableVehiclesStore);
+  console.log("Veicoli memorizzati nello store:", availableVehiclesStore);
 };
+
 
 const resetStore = () => {
   firstMessage = null;

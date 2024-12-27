@@ -62,7 +62,9 @@ export const createMessage = async (req: Request, res: Response) => {
 
     addMessageToStore(message_text);
 
-    const gptResponse = await callChatGpt(message_text);
+    const existingParams = await Message.find({ conversation: conversation._id }).sort({ createdAt: -1 }).limit(1);
+
+    const gptResponse = await callChatGpt(message_text, existingParams[0]?.parameters || {});
     console.log('GPT Response:', gptResponse);
 
     const responseId = new mongoose.Types.ObjectId();
@@ -109,6 +111,8 @@ export const createMessage = async (req: Request, res: Response) => {
 
     console.log('Veicoli disponibili: ', availableVehicles);
 
+    addAvailableVehiclesToStore(availableVehicles);
+
     res.status(201).json({
       responseText: gptMessageResponse.responseText,
       createdMessage: message,
@@ -127,13 +131,27 @@ export const chooseVehicleText = async (req: Request, res: Response) => {
   const { message_text, message_type, availableVehicles } = req.body;
 
   try {
+    
     if (!availableVehicles || availableVehicles.length === 0) {
       return res.status(400).json({ error: "No available vehicles provided." });
     }
 
     addMessageToStore(message_text);
 
-    const gptResponseSelection = await selectVehicle(message_text);
+    
+    const availableVehiclesCustom = availableVehicles.map((vehicle: any) => {
+      return {
+        id: vehicle._id,
+        plate: vehicle.plate,
+        brandName: vehicle.brand?.brandName,
+        modelName: vehicle.model?.modelName
+      };
+    });
+
+    console.log(availableVehiclesCustom);
+
+
+    const gptResponseSelection = await selectVehicle(message_text, availableVehiclesCustom);
 
     console.log("Selezione veicolo:", gptResponseSelection);
 
@@ -167,7 +185,6 @@ const fetchAvailableVehicles = async (params: any, authToken: string) => {
 
 
     const vehicles = await movolabAvailableVehicles(params, authToken);
-    addAvailableVehiclesToStore(vehicles);
 
     return vehicles;
 

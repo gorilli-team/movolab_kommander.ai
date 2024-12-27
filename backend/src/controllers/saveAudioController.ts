@@ -187,6 +187,8 @@ const createMessageWithAnalysis = async (transcription: string, res: Response) =
       response: gptMessageResponse,
     }, authToken);
 
+    addAvailableVehiclesToStore(availableVehicles);
+
     res.status(201).json({
       responseText: gptMessageResponse.responseText,
       createdMessage: message,
@@ -217,7 +219,6 @@ const fetchAvailableVehicles = async (params: any, authToken: string) => {
     }
 
     const vehicles = await movolabAvailableVehicles(params, authToken);
-    addAvailableVehiclesToStore(vehicles);
     return vehicles;
   } catch (error: any) {
     throw new Error(`Errore durante la richiesta ai veicoli disponibili: ${error.message}`);
@@ -234,7 +235,12 @@ export const chooseVehicleAudio = (req: Request, res: Response) => {
       return handleErrorResponse(res, new Error('No audio file uploaded'), 400);
     }
 
-    const { availableVehicles } = req.body; 
+    let availableVehicles;
+    try {
+      availableVehicles = JSON.parse(req.body.availableVehicles);
+    } catch (parseError) {
+      return handleErrorResponse(res, new Error('Error parsing availableVehicles JSON'), 400);
+    }
 
     if (!availableVehicles || availableVehicles.length === 0) {
       return res.status(400).json({ error: 'No available vehicles provided.' });
@@ -243,7 +249,6 @@ export const chooseVehicleAudio = (req: Request, res: Response) => {
     const uploadedFilePath = path.join(uploadsDirectory, req.file.filename);
 
     try {
-      
       let processedFilePath = uploadedFilePath;
       if (path.extname(uploadedFilePath) === '.wav') {
         const outputFilePath = path.join(uploadsDirectory, `${Date.now()}.mp3`);
@@ -252,10 +257,20 @@ export const chooseVehicleAudio = (req: Request, res: Response) => {
       }
 
       const transcription = await transcribeFileWithWhisper(processedFilePath);
-
       addMessageToStore(transcription);
 
-      const gptResponseSelection = await selectVehicle(transcription);
+      const availableVehiclesCustom = availableVehicles.map((vehicle: any) => {
+        return {
+          id: vehicle._id,
+          plate: vehicle.plate,
+          brandName: vehicle.brand?.brandName,
+          modelName: vehicle.model?.modelName
+        };
+      });
+  
+      console.log(availableVehiclesCustom);
+
+      const gptResponseSelection = await selectVehicle(transcription, availableVehiclesCustom);
 
       console.log('Selezione veicolo:', gptResponseSelection);
 

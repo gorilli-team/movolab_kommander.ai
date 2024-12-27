@@ -1,11 +1,10 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
-import { availableVehiclesStore } from '../store/messageStore';
 
 
 dotenv.config();
 
-export const callChatGpt = async (text: string): Promise<Record<string, any>> => {
+export const callChatGpt = async (text: string, existingParams: Record<string, any> = {}): Promise<Record<string, any>> => {
   const referenceData = {
     "groups": [
       { "_id": "63acb41afd939e8f05d5069a", "mnemonic": "2WC", "description": "SCOOTER" },
@@ -45,14 +44,16 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
   };
   
   const prompt = `
-  Analizza il seguente messaggio del cliente: "${text}" e seguendo i seguenti dati di riferimento,
+  Analizza il seguente messaggio del cliente: "${text}". Segui i seguenti dati di riferimento,
 
   - **Gruppi di veicoli**: ${JSON.stringify(referenceData.groups)}
   - **Workflows**: ${JSON.stringify(referenceData.workflows)}
   - **Location di noleggio**: ${JSON.stringify(referenceData.rental_location)}
   - **Tipi di movimento**: ${JSON.stringify(referenceData.movement_types)}
 
-  estrai i seguenti parametri:
+  Questa è la tua response precedente, ${JSON.stringify(existingParams)}, se è vuota non fare nulla, se ha dei parametri prendili e inseriscili come dati nel JSON finale che devi restituirre, oltre a ricavare i nuovi parametri dal testo dell'utente.
+
+  Estrai i seguenti parametri:
 
   1. La data di presa del veicolo (formato: YYYY-MM-DDTHH:MM).
   2. La data di restituzione del veicolo (formato: YYYY-MM-DDTHH:MM).
@@ -160,15 +161,15 @@ const parseChatGptResponse = (rawReply: string): Record<string, any> => {
   }
 };
 
-export const selectVehicle = async (userText: string): Promise<Record<string, any>> => {
 
-  const availableVehicles = availableVehiclesStore;
+export const selectVehicle = async (userText: string, availableVehicles: any[]): Promise<Record<string, any>> => {
 
   const availableVehiclesJson = JSON.stringify(availableVehicles);
 
+
   const prompt = `
-    In base al messaggio dell'utente: "${userText}", che è la selezione di un veicolo, devi restituirmi il veicolo adatto tra quelli presenti nell'oggetto fornito "availableVehicles".
-    Devi guardare dentro ${availableVehiclesJson}, un oggetto di questi è il veicolo che devi prendere e di cui devi restituire le seguenti informazioni come riportate nel JSON sotto.
+    L'utente sceglie un veicolo, "${userText}". tra quelli presenti in ${availableVehiclesJson}.
+    Restituisci solo i dettagli richiesti del veicolo selezionato, nel formato JSON sotto, devi ricavare solo quattro dati, id, plate, brand name e model name.
 
     Rispondi nel seguente formato JSON:
     {
@@ -181,17 +182,7 @@ export const selectVehicle = async (userText: string): Promise<Record<string, an
       }
     }
 
-    Se non puoi selezionare un veicolo valido, restituisci:
-    {
-      "selectedVehicle": {
-        "_id": null,
-        "targa": null,
-        "brand": null,
-        "model": null,
-        "responseText": "Messaggio che indica che non è stato possibile selezionare un veicolo."
-      }
-    }
-
+    Se non puoi selezionare un veicolo valido, restituisci tutto a null con il response text: "Non è stato possibile selezionare un veicolo."
     Devo solo rispondere con il JSON, non con altre frasi aggiuntive.
   `;
 
@@ -212,15 +203,23 @@ export const selectVehicle = async (userText: string): Promise<Record<string, an
         },
       }
     );
-
+  
     const rawReply = response.data.choices[0].message.content;
-    console.log("response scelta: ", rawReply);
-
+    console.log("Risposta grezza da ChatGPT:", rawReply);
+  
+    const isValidJson = rawReply.startsWith('{') && rawReply.endsWith('}');
+    if (!isValidJson) {
+      throw new Error('La risposta non è un JSON valido.');
+    }
+  
     return parseChatGptResponse(rawReply);
+  
   } catch (error: any) {
     console.error('Errore nella chiamata a ChatGPT:', error.message);
+    console.error('Dettagli dell\'errore:', error.response?.data);
     throw new Error('Errore nella chiamata a ChatGPT. Controlla i log.');
   }
+  
 };
 
 

@@ -314,7 +314,7 @@ export default function Dashboard() {
   
         const response = await fetch("http://localhost:5000/choose_vehicle_audio", {
           method: "POST",
-          body: formData,
+          body: formData, 
         });
   
         const result = await response.json();
