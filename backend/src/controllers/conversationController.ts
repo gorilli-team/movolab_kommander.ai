@@ -1,9 +1,12 @@
 import { Request, Response } from 'express';
 import ConversationModel from '../models/conversationModel';
+import { resetStore } from '../store/messageStore';
 
 export const createConversation = async (req: Request, res: Response) => {
   try {
 
+    resetStore();
+    
     const newConversation = new ConversationModel({});
 
     const savedConversation = await newConversation.save();

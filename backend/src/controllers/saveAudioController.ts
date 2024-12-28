@@ -11,7 +11,7 @@ import Message from '../models/messageModel';
 import { callChatGpt, selectVehicle } from './chatGptController';
 import { movolabAvailableVehicles } from './movolabController';
 import mongoose from 'mongoose';
-import { addMessageToStore, addAvailableVehiclesToStore } from '../store/messageStore';
+import { addMessageToStore, addAvailableVehiclesToStore, messages } from '../store/messageStore';
 import ConversationModel from '../models/conversationModel';
 
 dotenv.config();
@@ -144,7 +144,8 @@ const createMessageWithAnalysis = async (transcription: string, res: Response) =
 
     addMessageToStore(transcription);
 
-    const gptResponse = await callChatGpt(transcription);
+    const gptResponse = await callChatGpt(transcription, messages);
+
     const responseId = new mongoose.Types.ObjectId();
 
     const gptMessageResponse = {

@@ -440,7 +440,7 @@ export default function Dashboard() {
     }`}
     >
         <div className="banner-custom-title flex items-center justify-between border-b border-gray-200 bg-gray-50 p-4">
-          <h2 className="font-bold">Cosa vuoi fare oggi?</h2>
+          <h2 className="font-bold">Prenota il tuo veicolo</h2>
           <button
             onClick={handleConfirmExit}
             className="text-gray-600 hover:text-blue-500"

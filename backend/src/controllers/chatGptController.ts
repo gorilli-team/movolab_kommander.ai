@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export const callChatGpt = async (text: string, existingParams: Record<string, any> = {}): Promise<Record<string, any>> => {
+export const callChatGpt = async (text: string, texts: string[]): Promise<Record<string, any>> => {
   const referenceData = {
     "groups": [
       { "_id": "63acb41afd939e8f05d5069a", "mnemonic": "2WC", "description": "SCOOTER" },
@@ -44,16 +44,16 @@ export const callChatGpt = async (text: string, existingParams: Record<string, a
   };
   
   const prompt = `
-  Analizza il seguente messaggio del cliente: "${text}". Segui i seguenti dati di riferimento,
+  Analizza il seguente messaggio del cliente: "${text}" e i seguenti messaggi precedenti ${texts} per ricavare i parametri necessari.
+  
+  Segui i seguenti dati di riferimento,
 
   - **Gruppi di veicoli**: ${JSON.stringify(referenceData.groups)}
   - **Workflows**: ${JSON.stringify(referenceData.workflows)}
   - **Location di noleggio**: ${JSON.stringify(referenceData.rental_location)}
   - **Tipi di movimento**: ${JSON.stringify(referenceData.movement_types)}
 
-  Questa è la tua response precedente, ${JSON.stringify(existingParams)}, se è vuota non fare nulla, se ha dei parametri prendili e inseriscili come dati nel JSON finale che devi restituirre, oltre a ricavare i nuovi parametri dal testo dell'utente.
-
-  Estrai i seguenti parametri:
+  ed estrai i seguenti parametri:
 
   1. La data di presa del veicolo (formato: YYYY-MM-DDTHH:MM).
   2. La data di restituzione del veicolo (formato: YYYY-MM-DDTHH:MM).
@@ -70,7 +70,8 @@ export const callChatGpt = async (text: string, existingParams: Record<string, a
     =>  - ResponseText: Un messaggio indicativo riguardo l'esito della richiesta. Se manca anche solo un parametro devi scrivere errore, elencando i parametri mancanti.
         - MissingParameters: Un array dove vengo inseriti i parametri mancanti, se non mancano parametri allora l'array sarà vuoto.
 
-  Se un parametro non è presente, restituisci "null" invece di un valore predefinito come "Non fornito". Non dedurre tu dei campi se non ci sono.
+  Se un parametro non è presente, restituisci "null" al momento invece di un valore predefinito come "Non fornito".
+  Ma se alla chiamata successiva leggendo tra i testi riesci a ricavare dei parametri, allora inseriscili nel json finale. L'obiettivo è quello che il JSON finale abbia tutti i parametri e la richiesta sia riuscita.
   
   Rispondi in formato JSON, come nell'esempio qui sotto. Non aggiungere note aggiuntive sotto il json.
   

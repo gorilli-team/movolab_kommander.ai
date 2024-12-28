@@ -1,20 +1,10 @@
-export let firstMessage: string | null = null;
-export const otherMessages: string[] = [];
-let isFirstMessage = true;
-
+export let messages: string[] = [];
 export let availableVehiclesStore: any[] = [];
 let isAvailableVehiclesSet = false;
 
 export const addMessageToStore = (message: string) => {
-  if (isFirstMessage) {
-    firstMessage = message;
-    isFirstMessage = false;
-  } else {
-    otherMessages.push(message);
-  }
-
-  console.log("First Message:", firstMessage);
-  console.log("Other Messages:", otherMessages);
+  messages.push(message);
+  console.log("Messagessss:", messages);
 };
 
 export const addAvailableVehiclesToStore = (vehicles: any[]) => {
@@ -29,11 +19,8 @@ export const addAvailableVehiclesToStore = (vehicles: any[]) => {
   console.log("Veicoli memorizzati nello store:", availableVehiclesStore);
 };
 
-
-const resetStore = () => {
-  firstMessage = null;
-  otherMessages.length = 0;
-  isFirstMessage = true;
+export const resetStore = () => {
+  messages.length = 0;
   availableVehiclesStore = [];
   isAvailableVehiclesSet = false;
 

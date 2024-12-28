@@ -4,7 +4,7 @@ import { callChatGpt, selectVehicle } from './chatGptController';
 import { movolabAvailableVehicles } from './movolabController';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-import { addMessageToStore, addAvailableVehiclesToStore } from '../store/messageStore';
+import { addMessageToStore, addAvailableVehiclesToStore, messages } from '../store/messageStore';
 import ConversationModel from '../models/conversationModel';
 
 dotenv.config();
@@ -62,10 +62,11 @@ export const createMessage = async (req: Request, res: Response) => {
 
     addMessageToStore(message_text);
 
-    const existingParams = await Message.find({ conversation: conversation._id }).sort({ createdAt: -1 }).limit(1);
 
-    const gptResponse = await callChatGpt(message_text, existingParams[0]?.parameters || {});
+    const gptResponse = await callChatGpt(message_text, messages);
     console.log('GPT Response:', gptResponse);
+
+
 
     const responseId = new mongoose.Types.ObjectId();
     const gptMessageResponse = {
