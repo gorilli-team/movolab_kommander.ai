@@ -8,16 +8,46 @@ body{
 }
 .banner-custom-title {
   border-radius: 10px 10px 0 0;
+  width: 800px;
 }
 
 .banner-custom-chat{
   min-height: 400px;
   max-height: 400px;
   overflow-y: auto;
+  width: 800px;
+  padding: 30px;
+}
+
+.banner-custom-chat {
+  min-height: 400px;
+  max-height: 400px;
+  overflow-y: auto;
+  width: 800px;
+  padding: 30px;
+
+  
+  scrollbar-width: none;
+}
+
+.banner-custom-chat::-webkit-scrollbar {
+  display: none;
+}
+
+
+.banner-chat-user{
+  width: 50%;
+}
+
+.banner-chat-kommander{
+  width: 50%;
+  margin-top: 40px;
+  padding-left: 80px;
 }
 
 .banner-custom-footer {
   border-radius: 0 0 10px 10px;
+  width: 800px;
 }
 
 .logo-kommander-chat {
@@ -33,12 +63,9 @@ body{
   padding-left: 6px;
 }
 
-.widget-custom{
-  width: 900px;
-}
-
 .info-message-div, .message{
   padding-left: 8px;
+  font-size: 14px;
 }
 
 
@@ -61,7 +88,6 @@ body{
   background-color: #3b82f6;
   color: white;
   font-weight: 600;
-  padding: 0.5rem 1rem;
   border-radius: 0.375rem;
   border: none;
   cursor: pointer;
@@ -90,4 +116,59 @@ body{
 
 .banner-buttons{
   margin-left: 10px;
+}
+
+.text-area-custom{
+  border: 0;
+  background-color: white;
+  width: 100%;
+  resize: none;
+}
+
+textarea:focus{
+  outline: none;
+}
+
+.text-area-div{
+  width: 85%;
+}
+
+.buttons-div{
+  width: 10%;
+}
+
+.div-kommander-message{
+  
+}
+
+[type='text']:focus,
+[type='email']:focus,
+[type='url']:focus,
+[type='password']:focus,
+[type='number']:focus,
+[type='date']:focus,
+[type='datetime-local']:focus,
+[type='month']:focus,
+[type='search']:focus,
+[type='tel']:focus,
+[type='time']:focus,
+[type='week']:focus,
+[multiple]:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    box-shadow: none;
+    border-color: initial;
+}
+
+textarea.w-full.text-area-custom {
+  outline: none;
+  resize: none;
+  overflow-y: scroll;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+textarea.w-full.text-area-custom::-webkit-scrollbar {
+  display: none;
 }

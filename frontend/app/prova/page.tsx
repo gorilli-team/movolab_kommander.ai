@@ -13,7 +13,7 @@ export default function Dashboard() {
         </div>
 
         {/* Chat */}
-        <div className="banner-custom-chat p-4 space-y-6">
+        <div className="banner-custom-chat flex">
           {/* Messaggio Utente */}
           <div className="flex items-start">
             <img

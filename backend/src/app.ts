@@ -1,20 +1,18 @@
 import express, { Request, Response, NextFunction } from 'express'; 
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import { uploadAudio } from './controllers/saveAudioController';
-import { getMessages, createMessage} from './controllers/messageController';
-import { login } from "./controllers/userController";
+import { chooseVehicleAudio, uploadAudio } from './controllers/saveAudioController';
+import { getMessages, createMessage, chooseVehicleText} from './controllers/messageController';
+import { createConversation } from './controllers/conversationController';
 
 const app = express();
 
 app.use(bodyParser.json());
 app.use(cors());
 
-
-app.post("/login", login);
-
-
 app.post('/upload-audio', uploadAudio);
+
+app.post('/choose_vehicle_audio', chooseVehicleAudio);
 
 
 app.get('/messages', async (req: Request, res: Response, next: NextFunction) => {
@@ -32,6 +30,25 @@ app.post('/new_message', async (req: Request, res: Response, next: NextFunction)
     next(error);
   }
 });
+
+
+app.post('/choose_vehicle_message', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await chooseVehicleText(req, res); 
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+app.post('/create_conversation', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await createConversation(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
 
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

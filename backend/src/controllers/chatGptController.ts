@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export const callChatGpt = async (text: string): Promise<Record<string, any>> => {
+export const callChatGpt = async (text: string, texts: string[]): Promise<Record<string, any>> => {
   const referenceData = {
     "groups": [
       { "_id": "63acb41afd939e8f05d5069a", "mnemonic": "2WC", "description": "SCOOTER" },
@@ -44,31 +44,36 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
   };
   
   const prompt = `
-  Analizza il seguente messaggio del cliente: "${text}" ed estrai i seguenti parametri:
+  Analizza il seguente messaggio del cliente: "${text}" e i seguenti messaggi precedenti ${texts} per ricavare i parametri necessari.
+  
+  Segui i seguenti dati di riferimento,
+
+  - **Gruppi di veicoli**: ${JSON.stringify(referenceData.groups)}
+  - **Workflows**: ${JSON.stringify(referenceData.workflows)}
+  - **Location di noleggio**: ${JSON.stringify(referenceData.rental_location)}
+  - **Tipi di movimento**: ${JSON.stringify(referenceData.movement_types)}
+
+  ed estrai i seguenti parametri:
+
   1. La data di presa del veicolo (formato: YYYY-MM-DDTHH:MM).
   2. La data di restituzione del veicolo (formato: YYYY-MM-DDTHH:MM).
   3. Il nome del conducente.
   4. Il nome del cliente.
   5. Il numero di telefono del conducente.
   6. Il numero di telefono del cliente.
-  7. Il gruppo di veicoli (id, mnemonic, description). Tendenzialmente il gruppo è rappresentato dal tipo di veicolo. Puoi anche scegliere tutti i gruppi quindi devi prenderli tutti.
-  8. Il workflow (id, nome).
+  7. Il gruppo di veicoli (id, mnemonic, description). Tendenzialmente il gruppo è rappresentato dal tipo di veicolo. Puoi anche scegliere tutti i gruppi quindi devi prenderli tutti. Se dice mostrameli tutti, prendili tutti.
+  8. Il workflow (id, nome). Attenzione tra prepagato prenotazione e prepagato apertura movo o anche solo tarvisio. Deve essere esplicita l'informazione.
   9. PickUpLocation (id, nome), è legato a rental location.
   10. DropOffLocation (id, nome), è legato a rental location.
   11. Il tipo di movimento, sicuramente ti verrà indicato il nome e non l'enum. 
   12. Response (response text, missing parameters). 
-    =>  - ResponseText: Un messaggio indicativo riguardo l'esito della richiesta. Se manca anche solo un parametro devi scrivere ERRORE, elencando i parametri mancanti.
+    =>  - ResponseText: Un messaggio indicativo riguardo l'esito della richiesta. Se manca anche solo un parametro devi scrivere errore, elencando i parametri mancanti.
         - MissingParameters: Un array dove vengo inseriti i parametri mancanti, se non mancano parametri allora l'array sarà vuoto.
 
-  Se manca un parametro, restituisci il valore a null.
-
-  I dati di riferimento sono i seguenti:
-  - **Gruppi di veicoli**: ${JSON.stringify(referenceData.groups)}
-  - **Workflows**: ${JSON.stringify(referenceData.workflows)}
-  - **Location di noleggio**: ${JSON.stringify(referenceData.rental_location)}
-  - **Tipi di movimento**: ${JSON.stringify(referenceData.movement_types)}
+  Se un parametro non è presente, restituisci "null" al momento invece di un valore predefinito come "Non fornito". Non dedurre tu campi se non hai le informazioni esatte.
+  Ma se alla chiamata successiva leggendo tra i testi riesci a ricavare dei parametri, allora inseriscili nel json finale. L'obiettivo è quello che il JSON finale abbia tutti i parametri e la richiesta sia riuscita.
   
-  Rispondi in formato JSON come nell'esempio qui sotto:
+  Rispondi in formato JSON, come nell'esempio qui sotto. Non aggiungere note aggiuntive sotto il json.
   
   {
     "pickUpDate": "2024-12-07T17:13",
@@ -77,6 +82,10 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
     "customer_name": "Giovanni Verdi",
     "driver_phone": "+39 012 345 6789",
     "customer_phone": "+39 987 654 3210",
+    "response": {
+      "responseText": "Richiesta riuscita! / Errore nella richiesta! Mancano i seguenti parametri: parametro1, parametro2, etc.",
+      "missingParameters": "[parameter1, parameter2]"
+    },
     "group": [
       { "_id": "63acb41afd939e8f05d5069a", "mnemonic": "2WC", "description": "SCOOTER" }
     ],
@@ -96,11 +105,7 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
       "_id": " ",
       "name": "Noleggio",
       "enum": "NOL"
-    }, 
-    "response": {
-      "responseText": "Richiesta riuscita / Errore nella richiesta, mancano i seguenti parametri: parametro1, parametro2, etc.",
-      "missingParameters": "[..., ...]"
-    },
+    }
   }
 `;
 
@@ -131,19 +136,21 @@ export const callChatGpt = async (text: string): Promise<Record<string, any>> =>
   }
 };
 
+const extractJson = (rawReply: string): string => {
+  const jsonMatch = rawReply.match(/({[\s\S]*})/);
+  if (!jsonMatch) {
+    throw new Error('Nessun blocco JSON trovato nella risposta.');
+  }
+  return jsonMatch[1];
+};
 
 
 const parseChatGptResponse = (rawReply: string): Record<string, any> => {
   try {
     console.log('Risposta grezza da ChatGPT:', rawReply);
 
-    const sanitizedReply = rawReply.replace(/,\s*([}\]])/g, '$1').trim();
+    const sanitizedReply = extractJson(rawReply);
 
-    if (!sanitizedReply.startsWith('{') || !sanitizedReply.endsWith('}')) {
-      throw new Error('La risposta non è un JSON valido.');
-    }
-
-  
     const parsedReply = JSON.parse(sanitizedReply);
 
     if (typeof parsedReply !== 'object' || parsedReply === null) {
@@ -153,8 +160,71 @@ const parseChatGptResponse = (rawReply: string): Record<string, any> => {
     return parsedReply;
   } catch (error: any) {
     console.error('Errore di parsing JSON:', error.message);
-    console.error('Risposta grezza:', rawReply); 
+    console.error('Risposta grezza:', rawReply);
     throw new Error('Il JSON restituito da ChatGPT non è valido.');
   }
 };
+
+
+
+export const selectVehicle = async (userText: string, availableVehicles: any[]): Promise<Record<string, any>> => {
+
+  const availableVehiclesJson = JSON.stringify(availableVehicles);
+
+
+  const prompt = `
+    L'utente sceglie un veicolo, "${userText}". tra quelli presenti in ${availableVehiclesJson}.
+    Restituisci solo i dettagli richiesti del veicolo selezionato, nel formato JSON sotto, devi ricavare solo quattro dati, id, plate, brand name e model name.
+    Se non puoi selezionare un veicolo valido, restituisci tutto a null con il response text: "Non è stato possibile selezionare un veicolo."
+    Devo solo rispondere con il JSON, non con altre frasi aggiuntive.
+
+    Rispondi nel seguente formato JSON:
+    {
+      "selectedVehicle": {
+        "_id": "id del veicolo selezionato",
+        "targa": "targa del veicolo selezionato",
+        "brand": "nome del brand",
+        "model": "nome del modello",
+        "gruppo": "id del gruppo",
+        "responseText": "Hai scelto il veicolo ... devi dire qualcosa sul veicolo scelto, ovvero targa, brand, model."
+      }
+    }
+  `;
+
+  try {
+    const response = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model: 'gpt-4',
+        messages: [
+          { role: 'system', content: 'You are an assistant specialized in selecting vehicles based on user input.' },
+          { role: 'user', content: prompt },
+        ],
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+      }
+    );
+  
+    const rawReply = response.data.choices[0].message.content;
+    console.log("Risposta grezza da ChatGPT:", rawReply);
+  
+    const isValidJson = rawReply.startsWith('{') && rawReply.endsWith('}');
+    if (!isValidJson) {
+      throw new Error('La risposta non è un JSON valido.');
+    }
+  
+    return parseChatGptResponse(rawReply);
+  
+  } catch (error: any) {
+    console.error('Errore nella chiamata a ChatGPT:', error.message);
+    console.error('Dettagli dell\'errore:', error.response?.data);
+    throw new Error('Errore nella chiamata a ChatGPT. Controlla i log.');
+  }
+  
+};
+
 
