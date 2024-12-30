@@ -62,7 +62,7 @@ export const callChatGpt = async (text: string, texts: string[]): Promise<Record
   5. Il numero di telefono del conducente.
   6. Il numero di telefono del cliente.
   7. Il gruppo di veicoli (id, mnemonic, description). Tendenzialmente il gruppo è rappresentato dal tipo di veicolo. Puoi anche scegliere tutti i gruppi quindi devi prenderli tutti. Se dice mostrameli tutti, prendili tutti.
-  8. Il workflow (id, nome). Attenzione tra prepagato prenotazione e prepagato apertura movo.
+  8. Il workflow (id, nome). Attenzione tra prepagato prenotazione e prepagato apertura movo o anche solo tarvisio. Deve essere esplicita l'informazione.
   9. PickUpLocation (id, nome), è legato a rental location.
   10. DropOffLocation (id, nome), è legato a rental location.
   11. Il tipo di movimento, sicuramente ti verrà indicato il nome e non l'enum. 
@@ -70,7 +70,7 @@ export const callChatGpt = async (text: string, texts: string[]): Promise<Record
     =>  - ResponseText: Un messaggio indicativo riguardo l'esito della richiesta. Se manca anche solo un parametro devi scrivere errore, elencando i parametri mancanti.
         - MissingParameters: Un array dove vengo inseriti i parametri mancanti, se non mancano parametri allora l'array sarà vuoto.
 
-  Se un parametro non è presente, restituisci "null" al momento invece di un valore predefinito come "Non fornito".
+  Se un parametro non è presente, restituisci "null" al momento invece di un valore predefinito come "Non fornito". Non dedurre tu campi se non hai le informazioni esatte.
   Ma se alla chiamata successiva leggendo tra i testi riesci a ricavare dei parametri, allora inseriscili nel json finale. L'obiettivo è quello che il JSON finale abbia tutti i parametri e la richiesta sia riuscita.
   
   Rispondi in formato JSON, come nell'esempio qui sotto. Non aggiungere note aggiuntive sotto il json.
@@ -136,17 +136,20 @@ export const callChatGpt = async (text: string, texts: string[]): Promise<Record
   }
 };
 
+const extractJson = (rawReply: string): string => {
+  const jsonMatch = rawReply.match(/({[\s\S]*})/);
+  if (!jsonMatch) {
+    throw new Error('Nessun blocco JSON trovato nella risposta.');
+  }
+  return jsonMatch[1];
+};
 
 
 const parseChatGptResponse = (rawReply: string): Record<string, any> => {
   try {
     console.log('Risposta grezza da ChatGPT:', rawReply);
 
-    const sanitizedReply = rawReply.substring(rawReply.indexOf('{'), rawReply.lastIndexOf('}') + 1).trim();
-
-    if (!sanitizedReply.startsWith('{') || !sanitizedReply.endsWith('}')) {
-      throw new Error('La risposta non è un JSON valido.');
-    }
+    const sanitizedReply = extractJson(rawReply);
 
     const parsedReply = JSON.parse(sanitizedReply);
 
@@ -163,6 +166,7 @@ const parseChatGptResponse = (rawReply: string): Record<string, any> => {
 };
 
 
+
 export const selectVehicle = async (userText: string, availableVehicles: any[]): Promise<Record<string, any>> => {
 
   const availableVehiclesJson = JSON.stringify(availableVehicles);
@@ -171,6 +175,8 @@ export const selectVehicle = async (userText: string, availableVehicles: any[]):
   const prompt = `
     L'utente sceglie un veicolo, "${userText}". tra quelli presenti in ${availableVehiclesJson}.
     Restituisci solo i dettagli richiesti del veicolo selezionato, nel formato JSON sotto, devi ricavare solo quattro dati, id, plate, brand name e model name.
+    Se non puoi selezionare un veicolo valido, restituisci tutto a null con il response text: "Non è stato possibile selezionare un veicolo."
+    Devo solo rispondere con il JSON, non con altre frasi aggiuntive.
 
     Rispondi nel seguente formato JSON:
     {
@@ -179,12 +185,10 @@ export const selectVehicle = async (userText: string, availableVehicles: any[]):
         "targa": "targa del veicolo selezionato",
         "brand": "nome del brand",
         "model": "nome del modello",
-        "responseText": "Hai scelto il veicolo ... devi dire qualcosa sul veicolo scelto, ovvero targa, brand, model"
+        "gruppo": "id del gruppo",
+        "responseText": "Hai scelto il veicolo ... devi dire qualcosa sul veicolo scelto, ovvero targa, brand, model."
       }
     }
-
-    Se non puoi selezionare un veicolo valido, restituisci tutto a null con il response text: "Non è stato possibile selezionare un veicolo."
-    Devo solo rispondere con il JSON, non con altre frasi aggiuntive.
   `;
 
   try {

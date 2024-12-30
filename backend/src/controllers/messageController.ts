@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import Message from '../models/messageModel';
 import { callChatGpt, selectVehicle } from './chatGptController';
-import { movolabAvailableVehicles } from './movolabController';
+import { movolabAvailableVehicles, movolabCreateReservation } from './movolabController';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-import { addMessageToStore, addAvailableVehiclesToStore, messages } from '../store/messageStore';
+import { addMessageToStore, addAvailableVehiclesToStore, messages, addLastMessageToStore, lastMessageStore } from '../store/messageStore';
 import ConversationModel from '../models/conversationModel';
 
 dotenv.config();
@@ -82,6 +82,16 @@ export const createMessage = async (req: Request, res: Response) => {
 
     await message.save();
 
+    if (conversation) {
+      const lastMessage = await Message.findOne({ 'conversation.conversationId': conversation._id })
+      .sort({ createdAt: -1 })
+      .exec();
+    
+      console.log("Ultimo messaggio della conversazione:", lastMessage);
+      addLastMessageToStore(lastMessage);
+    }
+
+
     const { pickUpDate, dropOffDate, pickUpLocation, dropOffLocation, group, movementType, workflow } = gptResponse;
 
     if (gptResponse.response.missingParameters.length > 0) {
@@ -132,37 +142,98 @@ export const chooseVehicleText = async (req: Request, res: Response) => {
   const { message_text, message_type, availableVehicles } = req.body;
 
   try {
-    
     if (!availableVehicles || availableVehicles.length === 0) {
       return res.status(400).json({ error: "No available vehicles provided." });
     }
 
     addMessageToStore(message_text);
 
-    
     const availableVehiclesCustom = availableVehicles.map((vehicle: any) => {
       return {
         id: vehicle._id,
         plate: vehicle.plate,
         brandName: vehicle.brand?.brandName,
-        modelName: vehicle.model?.modelName
+        modelName: vehicle.model?.modelName,
+        group: vehicle.version?.group?._id
       };
     });
 
     console.log(availableVehiclesCustom);
 
-
     const gptResponseSelection = await selectVehicle(message_text, availableVehiclesCustom);
 
     console.log("Selezione veicolo:", gptResponseSelection);
 
+     const params = {
+       pickUpDate: lastMessageStore.parameters.pickUpDate,
+       dropOffDate: lastMessageStore.parameters.dropOffDate,
+       pickUpLocation: lastMessageStore.parameters.pickUpLocation._id,
+       dropOffLocation: lastMessageStore.parameters.dropOffLocation._id,
+       group: gptResponseSelection.selectedVehicle.gruppo,
+       movementType: lastMessageStore.parameters.movementType.enum,
+       workflow: lastMessageStore.parameters.workflow._id,
+       vehicle: gptResponseSelection.selectedVehicle._id
+     };
+
+    console.log("Params before reservation:", params);
+
+    const authToken = process.env.MOVOLAB_AUTH_TOKEN;
+    if (!authToken) {
+       throw new Error('MOVOLAB_AUTH_TOKEN non definito nell\'env');
+    }
+
+    const reservation = await createReservationHandler(params, authToken);
+
+    console.log("prenotazione", reservation);
+
     res.status(201).json({
       selectionVehicle: gptResponseSelection,
+      reservation: reservation
     });
+
   } catch (error) {
     handleErrorResponse(res, error, 400);
   }
 };
+
+
+ const createReservationHandler = async (params: any, authToken: string) => {
+
+  try {
+    
+     if (
+       !params.pickUpDate ||
+       !params.dropOffDate ||
+       !params.pickUpLocation ||
+       !params.dropOffLocation ||
+       !params.movementType ||
+       !params.group ||
+       !params.workflow ||
+       !params.movementType ||
+       !params.vehicle
+     ) {
+    
+       throw new Error('Parametri obbligatori mancanti o non validi');
+     }
+
+     if (!authToken) {
+       throw new Error('Token di autenticazione non fornito');
+     }
+
+
+     const reservation = await movolabCreateReservation(params, authToken);
+     console.log("reservation done", reservation);
+
+     return reservation;
+
+   } catch (error: any) {
+
+     throw new Error('Errore durante la richiesta di prenotazione: ' + error.message);
+   }
+
+
+ }
+
 
 
 const fetchAvailableVehicles = async (params: any, authToken: string) => {

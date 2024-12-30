@@ -6,7 +6,7 @@ import { HiInformationCircle } from "react-icons/hi";
 import { Alert } from "flowbite-react";
 
 export default function Dashboard() {
-  const [isModalOpen, setIsModalOpen] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [message, setMessage] = useState<string>("");
   const [audioFile, setAudioFile] = useState<Blob | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -267,6 +267,7 @@ export default function Dashboard() {
         const result = await response.json();
         console.log("Risultato:", result);
         const responseText = result.selectionVehicle.selectedVehicle.responseText || "Errore di interpretazione. Riprova.";
+        const reservationId = result.reservation.updatedReservation._id;
   
         setMessages((prevMessages) => {
           const newMessages = [...prevMessages];
@@ -277,6 +278,17 @@ export default function Dashboard() {
             lastKommanderMessage.content = responseText;
             lastKommanderMessage.isLoading = false;
           }
+  
+          newMessages.push({
+            type: "kommander",
+            content: `<p><a href="https://dev.movolab.it/dashboard/prenotazioni/${reservationId}" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">Vai alla bozza della tua prenotazione</a>.</p>`,
+            time: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            isLoading: false,
+          });
+  
           return newMessages;
         });
       } catch (error) {
@@ -297,6 +309,7 @@ export default function Dashboard() {
       setIsLoading(false);
     }
   };
+  
   
   const chooseVehicleAudio = async () => {
     if (!audioFile) return;
@@ -314,13 +327,14 @@ export default function Dashboard() {
   
         const response = await fetch("http://localhost:5000/choose_vehicle_audio", {
           method: "POST",
-          body: formData, 
+          body: formData,
         });
   
         const result = await response.json();
         console.log("Risultato:", result);
   
         const responseText = result.selectionVehicle.selectedVehicle.responseText || "Errore di interpretazione. Riprova.";
+        const reservationId = result.reservation.updatedReservation._id;
         setMessages((prevMessages) => {
           const newMessages = [...prevMessages];
           const lastKommanderMessage = newMessages.find(
@@ -330,6 +344,17 @@ export default function Dashboard() {
             lastKommanderMessage.content = responseText;
             lastKommanderMessage.isLoading = false;
           }
+  
+          newMessages.push({
+            type: "kommander",
+            content: `<p><a href="https://dev.movolab.it/dashboard/prenotazioni/${reservationId}" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">Vai alla bozza della tua prenotazione</a></p>`,
+            time: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            isLoading: false,
+          });
+  
           return newMessages;
         });
       } catch (error) {
@@ -350,13 +375,23 @@ export default function Dashboard() {
       setIsLoading(false);
     }
   };
+  
+
+  const resetState = () => {
+    setIsModalOpen(false);
+    setMessage("");
+    setAudioFile(null);
+    setIsLoading(false);
+    setIsRecording(false);
+    setMessages([]);
+    setVehicles([]);
+    setIsConfirmationOpen(false);
+  };
 
   
   const handleNewConversation = async () => { 
-      setIsModalOpen(false);
-      setIsConfirmationOpen(false);
+      resetState();
 
-      setMessages([]);
     
        try {
    
@@ -393,7 +428,7 @@ export default function Dashboard() {
     
     
   return (
-    <div className="overflow-auto flex w-full h-screen justify-center items-center bg-gray-100">
+    <div className="overflow-auto flex w-full h-screen justify-center items-center">
            {isModalOpen && (
      <div className="absolute inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
      <div className="bg-white rounded-lg shadow-lg p-6 text-center">
@@ -411,7 +446,7 @@ export default function Dashboard() {
      <div className="absolute inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
      <div className="rounded-lg p-6 text-center">
      <Alert
-     color="warning"
+     color="info"
      rounded
      >
      <span className="font-medium">Sei sicuro di voler chiudere questa conversazione?</span>

@@ -9,9 +9,9 @@ import FormData from 'form-data';
 import dotenv from 'dotenv';
 import Message from '../models/messageModel';
 import { callChatGpt, selectVehicle } from './chatGptController';
-import { movolabAvailableVehicles } from './movolabController';
+import { movolabAvailableVehicles, movolabCreateReservation } from './movolabController';
 import mongoose from 'mongoose';
-import { addMessageToStore, addAvailableVehiclesToStore, messages } from '../store/messageStore';
+import { addMessageToStore, addAvailableVehiclesToStore, messages, addLastMessageToStore, lastMessageStore } from '../store/messageStore';
 import ConversationModel from '../models/conversationModel';
 
 dotenv.config();
@@ -161,6 +161,15 @@ const createMessageWithAnalysis = async (transcription: string, res: Response) =
 
     await message.save();
 
+    if (conversation) {
+      const lastMessage = await Message.findOne({ 'conversation.conversationId': conversation._id })
+      .sort({ createdAt: -1 })
+      .exec();
+    
+      console.log("Ultimo messaggio della conversazione:", lastMessage);
+      addLastMessageToStore(lastMessage);
+    }
+
     const { pickUpDate, dropOffDate, pickUpLocation, dropOffLocation, group, movementType, workflow } = gptResponse;
 
     if (gptResponse.response.missingParameters.length > 0) {
@@ -265,7 +274,8 @@ export const chooseVehicleAudio = (req: Request, res: Response) => {
           id: vehicle._id,
           plate: vehicle.plate,
           brandName: vehicle.brand?.brandName,
-          modelName: vehicle.model?.modelName
+          modelName: vehicle.model?.modelName,
+          group: vehicle.version?.group?._id
         };
       });
   
@@ -278,12 +288,72 @@ export const chooseVehicleAudio = (req: Request, res: Response) => {
       if (fs.existsSync(uploadedFilePath)) fs.unlinkSync(uploadedFilePath);
       if (fs.existsSync(processedFilePath)) fs.unlinkSync(processedFilePath);
 
+      const params = {
+      pickUpDate: lastMessageStore.parameters.pickUpDate,
+      dropOffDate: lastMessageStore.parameters.dropOffDate,
+      pickUpLocation: lastMessageStore.parameters.pickUpLocation._id,
+      dropOffLocation: lastMessageStore.parameters.dropOffLocation._id,
+      group: gptResponseSelection.selectedVehicle.gruppo,
+      movementType: lastMessageStore.parameters.movementType.enum,
+      workflow: lastMessageStore.parameters.workflow._id,
+      vehicle: gptResponseSelection.selectedVehicle._id
+      };
+      
+      console.log("Params before reservation:", params);
+  
+      const authToken = process.env.MOVOLAB_AUTH_TOKEN;
+      if (!authToken) {
+          throw new Error('MOVOLAB_AUTH_TOKEN non definito nell\'env');
+      }
+  
+      const reservation = await createReservationHandler(params, authToken);
+  
+      console.log("prenotazione", reservation);
+
       res.status(201).json({
         transcription,
         selectionVehicle: gptResponseSelection,
+        reservation: reservation
       });
     } catch (error) {
       handleErrorResponse(res, error);
     }
   });
 };
+
+ const createReservationHandler = async (params: any, authToken: string) => {
+
+  try {
+    
+     if (
+       !params.pickUpDate ||
+       !params.dropOffDate ||
+       !params.pickUpLocation ||
+       !params.dropOffLocation ||
+       !params.movementType ||
+       !params.group ||
+       !params.workflow ||
+       !params.movementType ||
+       !params.vehicle
+     ) {
+    
+       throw new Error('Parametri obbligatori mancanti o non validi');
+     }
+
+     if (!authToken) {
+       throw new Error('Token di autenticazione non fornito');
+     }
+
+
+     const reservation = await movolabCreateReservation(params, authToken);
+     console.log("reservation done", reservation);
+
+     return reservation;
+
+   } catch (error: any) {
+
+     throw new Error('Errore durante la richiesta di prenotazione: ' + error.message);
+   }
+
+
+ }
