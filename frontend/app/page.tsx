@@ -269,26 +269,18 @@ export default function Dashboard() {
         const responseText = result.selectionVehicle.selectedVehicle.responseText || "Errore di interpretazione. Riprova.";
         const reservationId = result.reservation.updatedReservation._id;
   
+        let messageContent = `${responseText}<br /><a href="https://dev.movolab.it/dashboard/prenotazioni/${reservationId}" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">Vai alla bozza della tua prenotazione</a>`;
+
         setMessages((prevMessages) => {
           const newMessages = [...prevMessages];
           const lastKommanderMessage = newMessages.find(
             (msg) => msg.type === "kommander" && msg.isLoading
           );
           if (lastKommanderMessage) {
-            lastKommanderMessage.content = responseText;
+            lastKommanderMessage.content = messageContent;
             lastKommanderMessage.isLoading = false;
           }
-  
-          newMessages.push({
-            type: "kommander",
-            content: `<p><a href="https://dev.movolab.it/dashboard/prenotazioni/${reservationId}" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">Vai alla bozza della tua prenotazione</a>.</p>`,
-            time: new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-            isLoading: false,
-          });
-  
+
           return newMessages;
         });
       } catch (error) {
@@ -335,26 +327,19 @@ export default function Dashboard() {
   
         const responseText = result.selectionVehicle.selectedVehicle.responseText || "Errore di interpretazione. Riprova.";
         const reservationId = result.reservation.updatedReservation._id;
+
+        let messageContent = `${responseText}<br /><a href="https://dev.movolab.it/dashboard/prenotazioni/${reservationId}" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">Ecco qui la bozza della tua prenotazione</a>`;
+
         setMessages((prevMessages) => {
           const newMessages = [...prevMessages];
           const lastKommanderMessage = newMessages.find(
             (msg) => msg.type === "kommander" && msg.isLoading
           );
           if (lastKommanderMessage) {
-            lastKommanderMessage.content = responseText;
+            lastKommanderMessage.content = messageContent;
             lastKommanderMessage.isLoading = false;
           }
-  
-          newMessages.push({
-            type: "kommander",
-            content: `<p><a href="https://dev.movolab.it/dashboard/prenotazioni/${reservationId}" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">Vai alla bozza della tua prenotazione</a></p>`,
-            time: new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-            isLoading: false,
-          });
-  
+            
           return newMessages;
         });
       } catch (error) {
