@@ -173,12 +173,14 @@ export const selectVehicle = async (userText: string, availableVehicles: any[]):
 
 
   const prompt = `
-    L'utente sceglie un veicolo, "${userText}". tra quelli presenti in ${availableVehiclesJson}.
-    Restituisci solo i dettagli richiesti del veicolo selezionato, nel formato JSON sotto, devi ricavare solo quattro dati, id, plate, brand name e model name.
-    Se non puoi selezionare un veicolo valido, restituisci tutto a null con il response text: "Non è stato possibile selezionare un veicolo."
-    Devo solo rispondere con il JSON, non con altre frasi aggiuntive.
+   L'utente ha fornito un numero "${userText}", che rappresenta la posizione di un veicolo nella lista seguente:
+    ${availableVehiclesJson}.
 
-    Rispondi nel seguente formato JSON:
+    Se il numero è 4, devi prendere il quarto elemento.
+
+    Restituisci solo il JSON, niente spiegazione fuori dal JSON.
+
+    Seleziona il veicolo corrispondente e restituisci le seguenti informazioni in formato JSON:
     {
       "selectedVehicle": {
         "_id": "id del veicolo selezionato",
@@ -186,7 +188,7 @@ export const selectVehicle = async (userText: string, availableVehicles: any[]):
         "brand": "nome del brand",
         "model": "nome del modello",
         "gruppo": "id del gruppo",
-        "responseText": "Hai scelto il veicolo ... devi dire qualcosa sul veicolo scelto, ovvero targa, brand, model."
+        "responseText": "Hai scelto il veicolo con targa ..., brand ..., modello ..."
       }
     }
   `;
@@ -211,11 +213,6 @@ export const selectVehicle = async (userText: string, availableVehicles: any[]):
   
     const rawReply = response.data.choices[0].message.content;
     console.log("Risposta grezza da ChatGPT:", rawReply);
-  
-    const isValidJson = rawReply.startsWith('{') && rawReply.endsWith('}');
-    if (!isValidJson) {
-      throw new Error('La risposta non è un JSON valido.');
-    }
   
     return parseChatGptResponse(rawReply);
   

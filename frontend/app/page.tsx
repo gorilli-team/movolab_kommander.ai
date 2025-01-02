@@ -80,23 +80,29 @@ export default function Dashboard() {
 
       if (availableVehicles.length > 0) {
         const vehiclesList = `
-          <div class="vehicle-list">
-            <p>Scegli uno dei seguenti veicoli:</p>
-            <ul>
-              ${availableVehicles
-                .map(
-                  (vehicle: any) => `
-              <li class="vehicle-item">
-                <span class="vehicle-icon">🚗</span> 
-                ${vehicle.plate} - ${vehicle.brand?.brandName} - ${vehicle.model?.modelName}
-              </li>`
-                )
-                .join("")}
-            </ul>
+          <div class="vehicle-grid">
+            ${availableVehicles
+              .map(
+                (vehicle: any, index: number) => `
+            <div class="vehicle-card">
+              <div>
+                <span class="vehicle-index">${index + 1}</span>
+              </div>
+              <div class="vehicle-card-image">
+                <img src=${vehicle.version?.imageUrl} alt=${vehicle.id} />
+              </div>
+              <div class="vehicle-card-content">
+                <p><strong>${vehicle.plate}</strong></p>
+                <p>${vehicle.brand?.brandName}</p>
+                <p>${vehicle.model?.modelName}</p>
+              </div>
+            </div>`
+              )
+              .join("")}
           </div>`;
-        messageContent += `<br />${vehiclesList}`;
+        messageContent += `<br /> <p>Scegli uno dei seguenti veicoli: </p> <br />${vehiclesList}`;
       }
-
+      
       setMessages((prevMessages) => {
         const newMessages = [...prevMessages];
         const lastKommanderMessage = newMessages.find(
@@ -159,23 +165,29 @@ export default function Dashboard() {
 
       if (availableVehicles.length > 0) {
         const vehiclesList = `
-          <div class="vehicle-list">
-            <p>Scegli uno dei seguenti veicoli:</p>
-            <ul>
-              ${availableVehicles
-                .map(
-                  (vehicle: any) => `
-              <li class="vehicle-item">
-                <span class="vehicle-icon">🚗</span> 
-                ${vehicle.plate} - ${vehicle.brand?.brandName} - ${vehicle.model?.modelName}
-              </li>`
-                )
-                .join("")}
-            </ul>
+          <div class="vehicle-grid">
+            ${availableVehicles
+              .map(
+                (vehicle: any, index: number) => `
+            <div class="vehicle-card">
+              <div>
+                <span class="vehicle-index">${index + 1}</span>
+              </div>
+              <div class="vehicle-card-image">
+                <img src=${vehicle.version?.imageUrl} alt=${vehicle.id} />
+              </div>
+              <div class="vehicle-card-content">
+                <p><strong>${vehicle.plate}</strong></p>
+                <p>${vehicle.brand?.brandName}</p>
+                <p>${vehicle.model?.modelName}</p>
+              </div>
+            </div>`
+              )
+              .join("")}
           </div>`;
-        messageContent += `<br />${vehiclesList}`;
+          messageContent += `<br /> <p>Scegli uno dei seguenti veicoli: </p> <br />${vehiclesList}`;
       }
-
+      
       setMessages((prevMessages) => {
         const newMessages = [...prevMessages];
         const lastKommanderMessage = newMessages.find(
@@ -269,7 +281,7 @@ export default function Dashboard() {
         const responseText = result.selectionVehicle.selectedVehicle.responseText || "Errore di interpretazione. Riprova.";
         const reservationId = result.reservation.updatedReservation._id;
   
-        let messageContent = `${responseText}<br /><a href="https://dev.movolab.it/dashboard/prenotazioni/${reservationId}" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">Vai alla bozza della tua prenotazione</a>`;
+        let messageContent = `${responseText}<br /><a href="https://dev.movolab.it/dashboard/prenotazioni/${reservationId}" target="_blank" rel="noopener noreferrer" class="inline-block px-4 py-2 border border-blue-500 text-blue-500 bg-white rounded-md text-center hover:bg-blue-500 hover:text-white transition-colors">Vedi la tua prenotazione</a>`;
 
         setMessages((prevMessages) => {
           const newMessages = [...prevMessages];
@@ -328,7 +340,7 @@ export default function Dashboard() {
         const responseText = result.selectionVehicle.selectedVehicle.responseText || "Errore di interpretazione. Riprova.";
         const reservationId = result.reservation.updatedReservation._id;
 
-        let messageContent = `${responseText}<br /><a href="https://dev.movolab.it/dashboard/prenotazioni/${reservationId}" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">Ecco qui la bozza della tua prenotazione</a>`;
+        let messageContent = `${responseText}<br /><a href="https://dev.movolab.it/dashboard/prenotazioni/${reservationId}" target="_blank" rel="noopener noreferrer" class="inline-block px-4 py-2 border border-blue-500 text-blue-500 bg-white rounded-md text-center hover:bg-blue-500 hover:text-white transition-colors">Vedi la tua prenotazione</a>`;
 
         setMessages((prevMessages) => {
           const newMessages = [...prevMessages];
@@ -401,11 +413,6 @@ export default function Dashboard() {
         setIsConfirmationOpen(false);
       };
     
-      const handleConfirmationYes = () => {
-       setIsConfirmationOpen(false);
-       setIsModalOpen(true);
-      };
-    
       const handleConfirmationNo = () => {
     
       setIsConfirmationOpen(false);
@@ -414,39 +421,27 @@ export default function Dashboard() {
     
   return (
     <div className="overflow-auto flex w-full h-screen justify-center items-center">
-           {isModalOpen && (
-     <div className="absolute inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-     <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-     <button
-     onClick={handleNewConversation}
-     className="btn-send py-2 px-4 text-sm"
-     >
-     Nuova conversazione
-     </button>
-     </div>
-     </div>
-     )}
 
      {isConfirmationOpen && (
      <div className="absolute inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
      <div className="rounded-lg p-6 text-center">
      <Alert
-     color="info"
+     color="light"
      rounded
      >
-     <span className="font-medium">Sei sicuro di voler chiudere questa conversazione?</span>
-     <div className="flex space-x-2 mt-2">
+     <span className="font-bold question-alert">Sei sicuro di voler chiudere questa conversazione?</span>
+     <div className="flex space-x-2 div-buttons-alert">
      <button
-     className="btn-send py-2 px-4 text-sm bg-green-500"
-     onClick={handleConfirmationYes}
-     >
-     Sì
-     </button>
-     <button
-     className="btn-send py-2 px-4 text-sm bg-red-500"
+     className="btn-alert btn-alert-no border-gray-100 py-2 px-4 text-sm bg-red-500"
      onClick={handleConfirmationNo}
      >
      No
+     </button>
+     <button
+     className="btn-alert btn-alert-yes border-red-800 py-2 px-4 text-sm bg-green-500"
+     onClick={handleNewConversation}
+     >
+     Sì
      </button>
     </div>
      </Alert>
@@ -465,41 +460,32 @@ export default function Dashboard() {
             onClick={handleConfirmExit}
             className="text-gray-600 hover:text-blue-500"
            >
-          <i className="fa-regular fa-circle-xmark text-xl"></i>
+          <i className="fa-solid fa-pen-to-square text-xl"></i>
            </button>
         </div>    
         <div className="banner-custom-chat p-4" ref={messageContainerRef}>
         {messages.map((message, index) => (
           <div key={index} className={`w-full flex ${message.type === "user" ? "" : "justify-end"}`}>
             <div className={`banner-chat-${message.type} flex`}>
-              {message.type === "user" && (
-                <img
-                  className="logo-kommander-chat"
-                  src="./spiaggia-tramonto.png"
-                  alt="user-icon"
-                />
-              )}
-              {message.type === "kommander" && !message.isLoading && (
-                <img
-                  className="logo-kommander-chat"
-                  src="./kommander-logo.png"
-                  alt="kommander-icon"
-                />
-              )}
+              <img
+                className="logo-kommander-chat"
+                src={message.type === "user" ? "./spiaggia-tramonto.png" : "./Logo (1).png"}
+                alt={`${message.type}-icon`}
+              />
               <div>
                 <div className="info-message-div">
-                  {!message.isLoading && (
-                    <>
-                      <span className="font-bold type-user">
-                        {message.type === "user" ? "User" : "Kommander.ai"}
-                      </span>
-                      <span className="hour-message">{message.time}</span>
-                    </>
-                  )}
+                  <span className="font-bold type-user">
+                    {message.type === "user" ? "User" : "Kommander.ai"}
+                  </span>
+                  <span className="hour-message">{message.time}</span>
                 </div>
                 {message.isLoading ? (
-                  <div className="w-full max-w-md mb-2 pt-2">
-                    <span className="font-bold">Kommander.ai sta pensando...</span>
+                  <div className="loader-container">
+                    <img
+                      src="./fade-stagger-circles.svg"
+                      alt="loader"
+                      className="w-6 h-6"
+                    />
                   </div>
                 ) : (
                   <>
@@ -519,7 +505,6 @@ export default function Dashboard() {
             </div>
           </div>
         ))}
-
         </div>
 
         <div className="banner-custom-footer flex w-full items-center justify-between border-t border-gray-200 bg-gray-50 p-4">
@@ -531,16 +516,18 @@ export default function Dashboard() {
               placeholder="Scrivi un messaggio..."
               disabled={isRecording}
             />
-            <button
-              className="btn-microphone ml-2 text-gray-600 hover:text-blue-500 focus:outline-none"
-              onClick={handleMicrophoneClick}
-            >
-              {isRecording ? (
-                <i className="fa-regular fa-circle-stop text-xl"></i>
-              ) : (
-                <i className="fa-solid fa-microphone text-xl"></i>
-              )}
-            </button>
+            <div className="register-div">
+              <button
+                className="btn-microphone ml-2 text-gray-600 hover:text-blue-500 focus:outline-none"
+                onClick={handleMicrophoneClick}
+              >
+                {isRecording ? (
+                  <i className="fa-regular fa-circle-stop text-xl"></i>
+                ) : (
+                  <i className="fa-solid fa-microphone text-xl"></i>
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col buttons-div items-center w-full space-y-2">
