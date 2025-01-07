@@ -249,3 +249,7 @@ textarea.w-full.text-area-custom::-webkit-scrollbar {
 .register-div{
   height: 55px;
 }
+
+.button-see-reservation{
+  margin-top: 8px;
+}
