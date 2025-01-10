@@ -83,7 +83,7 @@ export const callChatGpt = async (text: string, texts: string[]): Promise<Record
     "driver_phone": "+39 012 345 6789",
     "customer_phone": "+39 987 654 3210",
     "response": {
-      "responseText": "Richiesta riuscita! / Errore nella richiesta! Mancano i seguenti parametri: parametro1, parametro2, etc.",
+      "responseText": "Richiesta riuscita! / Per completare la tua richiesta ho bisogno delle seguenti informazioni: Il flusso e puoi scegliere tra i seguenti, etc.",
       "missingParameters": "[parameter1, parameter2]"
     },
     "group": [

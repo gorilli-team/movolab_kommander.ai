@@ -107,6 +107,8 @@ const transcribeFileWithWhisper = async (filePath: string): Promise<string> => {
   const formData = new FormData();
   formData.append('file', fs.createReadStream(filePath));
   formData.append('model', 'whisper-1');
+  formData.append('language', 'it');
+  formData.append('temperature', '0.2');
 
   const response = await axios.post('https://api.openai.com/v1/audio/transcriptions', formData, {
     headers: {
