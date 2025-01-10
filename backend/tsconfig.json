@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["node", "dotenv"],
     "target": "ES6",
     "module": "CommonJS",
     "rootDir": "./src",
