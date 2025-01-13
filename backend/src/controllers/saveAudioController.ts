@@ -13,6 +13,7 @@ import { movolabAvailableVehicles, movolabCreateReservation } from './movolabCon
 import mongoose from 'mongoose';
 import { addMessageToStore, addAvailableVehiclesToStore, messages, addLastMessageToStore, lastMessageStore } from '../store/messageStore';
 import ConversationModel from '../models/conversationModel';
+import tokenStore from '../store/tokenStore';
 
 dotenv.config();
 
@@ -183,9 +184,9 @@ const createMessageWithAnalysis = async (transcription: string, res: Response) =
       return;
     }
 
-    const authToken = process.env.MOVOLAB_AUTH_TOKEN;
+    const authToken = tokenStore.get('MOVOLAB_AUTH_TOKEN');
     if (!authToken) {
-      throw new Error('MOVOLAB_AUTH_TOKEN non definito nell\'env');
+      throw new Error('MOVOLAB_AUTH_TOKEN non definito nello store');
     }
 
     const availableVehicles = await fetchAvailableVehicles({
@@ -303,9 +304,9 @@ export const chooseVehicleAudio = (req: Request, res: Response) => {
       
       console.log("Params before reservation:", params);
   
-      const authToken = process.env.MOVOLAB_AUTH_TOKEN;
+      const authToken = tokenStore.get('MOVOLAB_AUTH_TOKEN');
       if (!authToken) {
-          throw new Error('MOVOLAB_AUTH_TOKEN non definito nell\'env');
+          throw new Error('MOVOLAB_AUTH_TOKEN non definito nello store');
       }
   
       const reservation = await createReservationHandler(params, authToken);
