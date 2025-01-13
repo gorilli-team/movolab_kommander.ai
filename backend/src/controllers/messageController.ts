@@ -148,6 +148,7 @@ export const chooseVehicleText = async (req: Request, res: Response) => {
     }
 
     addMessageToStore(message_text);
+    
 
     const availableVehiclesCustom = availableVehicles.map((vehicle: any) => {
       return {

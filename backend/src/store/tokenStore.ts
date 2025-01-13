@@ -10,6 +10,9 @@ const tokenStore = {
   clear(key: string) {
     tokenStorage.delete(key);
   },
+  has(key: string): boolean {
+    return tokenStorage.has(key);
+  },
 };
 
 export default tokenStore;

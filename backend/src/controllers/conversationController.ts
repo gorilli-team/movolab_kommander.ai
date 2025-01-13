@@ -12,7 +12,7 @@ export const createConversation = async (req: Request, res: Response) => {
 
     resetStore();
 
-    const authToken = req.headers.authorization?.split(' ')[1];
+    let authToken = req.headers.authorization?.split(' ')[1];
 
     // const envFilePath = './.env';
     // let envData = fs.readFileSync(envFilePath, 'utf-8');
@@ -25,14 +25,15 @@ export const createConversation = async (req: Request, res: Response) => {
     // fs.writeFileSync(envFilePath, envData);
 
     if (!authToken) {
-      return res.status(400).json({
-        success: false,
-        message: 'Token di autorizzazione mancante.',
-      });
+      authToken = tokenStore.get('MOVOLAB_AUTH_TOKEN');
+      console.log("token se non c'è", authToken);
     }
 
-    tokenStore.set('MOVOLAB_AUTH_TOKEN', authToken);
-    console.log('Token movolab salvato nello store:', tokenStore.get('MOVOLAB_AUTH_TOKEN'));
+    if (authToken) {
+      tokenStore.set('MOVOLAB_AUTH_TOKEN', authToken);
+      console.log('Token movolab salvato nello store:', tokenStore.get('MOVOLAB_AUTH_TOKEN'));
+    }
+
 
     const newConversation = new ConversationModel({});
 

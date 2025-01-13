@@ -67,7 +67,7 @@ export const callChatGpt = async (text: string, texts: string[]): Promise<Record
   10. DropOffLocation (id, nome), è legato a rental location.
   11. Il tipo di movimento, sicuramente ti verrà indicato il nome e non l'enum. 
   12. Response (response text, missing parameters). 
-    =>  - ResponseText: Un messaggio indicativo riguardo l'esito della richiesta. Se manca anche solo un parametro devi scrivere errore, elencando i parametri mancanti.
+    =>  - ResponseText: Un messaggio indicativo riguardo l'esito della richiesta. Se ci sono tutti i parametri scrivi "Richiesta riuscita!". Se manca anche solo un parametro devi scrivere una frase del genere "Per completare la tua richiesta ho bisogno delle seguenti informazioni: parametro1, parametro2, etc.".
         - MissingParameters: Un array dove vengo inseriti i parametri mancanti, se non mancano parametri allora l'array sarà vuoto.
 
   Se un parametro non è presente, restituisci "null" al momento invece di un valore predefinito come "Non fornito". Non dedurre tu campi se non hai le informazioni esatte.
@@ -173,10 +173,14 @@ export const selectVehicle = async (userText: string, availableVehicles: any[]):
 
 
   const prompt = `
-   L'utente ha fornito un numero "${userText}", che rappresenta la posizione di un veicolo nella lista seguente:
-    ${availableVehiclesJson}.
+   L'utente fornisce un numero "${userText}" e un array di veicoli ${availableVehiclesJson}.
 
-    Se il numero è 4, devi prendere il quarto elemento.
+   Il numero rappresenta il veicolo che devi scegliere o almeno la posizione, non l'indice.
+
+   Se il numero è 1, devi prendere il primo elemento nell'array,
+   Se il numero è 2, devi prendere il secondo elemento nell'array, 
+   Se il numero è 3, devi prendere il terzo elemento nell'array,
+   e così via.
 
     Restituisci solo il JSON, niente spiegazione fuori dal JSON.
 
