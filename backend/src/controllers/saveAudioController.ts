@@ -168,8 +168,6 @@ const createMessageWithAnalysis = async (transcription: string, res: Response) =
       const lastMessage = await Message.findOne({ 'conversation.conversationId': conversation._id })
       .sort({ createdAt: -1 })
       .exec();
-    
-      console.log("Ultimo messaggio della conversazione:", lastMessage);
       addLastMessageToStore(lastMessage);
     }
 

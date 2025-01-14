@@ -59,15 +59,10 @@ export const createMessage = async (req: Request, res: Response) => {
       },
     });
 
-    console.log('Message saved successfully:', message);
-
     addMessageToStore(message_text);
 
 
     const gptResponse = await callChatGpt(message_text, messages);
-    console.log('GPT Response:', gptResponse);
-
-
 
     const responseId = new mongoose.Types.ObjectId();
     const gptMessageResponse = {
@@ -87,8 +82,6 @@ export const createMessage = async (req: Request, res: Response) => {
       const lastMessage = await Message.findOne({ 'conversation.conversationId': conversation._id })
       .sort({ createdAt: -1 })
       .exec();
-    
-      console.log("Ultimo messaggio della conversazione:", lastMessage);
       addLastMessageToStore(lastMessage);
     }
 
@@ -120,8 +113,6 @@ export const createMessage = async (req: Request, res: Response) => {
       },
       authToken
     );
-
-    console.log('Veicoli disponibili: ', availableVehicles);
 
     addAvailableVehiclesToStore(availableVehicles);
 
