@@ -180,7 +180,8 @@ export const selectVehicle = async (userText: string, availableVehicles: any[]):
    Se il numero è 1, devi prendere il primo elemento nell'array,
    Se il numero è 2, devi prendere il secondo elemento nell'array, 
    Se il numero è 3, devi prendere il terzo elemento nell'array,
-   e così via.
+   Se il numero è 4, devi prendere il quarto elemento nell'array,
+   Se il numero è 5, devi prendere il quinto elemento nell'array,
 
     Restituisci solo il JSON, niente spiegazione fuori dal JSON.
 
