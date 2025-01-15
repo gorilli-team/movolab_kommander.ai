@@ -61,7 +61,7 @@ export const callChatGpt = async (text: string, texts: string[]): Promise<Record
   4. Il nome del cliente.
   5. Il numero di telefono del conducente.
   6. Il numero di telefono del cliente.
-  7. Il gruppo di veicoli (id, mnemonic, description). Tendenzialmente il gruppo è rappresentato dal tipo di veicolo. Puoi anche scegliere tutti i gruppi quindi devi prenderli tutti. Se dice mostrameli tutti, prendili tutti.
+  7. Il gruppo di veicoli (id, mnemonic, description). Tendenzialmente il gruppo è rappresentato dal tipo di veicolo. Puoi anche scegliere tutti i gruppi quindi devi prenderli tutti. Se dice mostrameli tutti, prendili tutti. Per esempio, se ricevi l'indicazione "voglio noleggiare una moto" devi scegliere solo il gruppo moto.
   8. Il workflow (id, nome). Attenzione tra prepagato prenotazione e prepagato apertura movo o anche solo tarvisio. Deve essere esplicita l'informazione.
   9. PickUpLocation (id, nome), è legato a rental location.
   10. DropOffLocation (id, nome), è legato a rental location.
@@ -175,13 +175,20 @@ export const selectVehicle = async (userText: string, availableVehicles: any[]):
   const prompt = `
    L'utente fornisce un numero "${userText}" e un array di veicoli ${availableVehiclesJson}.
 
-   Il numero rappresenta il veicolo che devi scegliere o almeno la posizione, non l'indice.
+   Il numero rappresenta la posizione del veicolo che devi scegliere all'interno dell'array, non l'indice.
+   Mi raccomando, prendi l'elemento corrispondente a quella posizione nell'array. Ad esempio, se scrivi '3', verrà restituito il terzo elemento dell'array.
 
    Se il numero è 1, devi prendere il primo elemento nell'array,
    Se il numero è 2, devi prendere il secondo elemento nell'array, 
    Se il numero è 3, devi prendere il terzo elemento nell'array,
    Se il numero è 4, devi prendere il quarto elemento nell'array,
    Se il numero è 5, devi prendere il quinto elemento nell'array,
+   Se il numero è 6, devi prendere il sesto elemento nell'array,
+   Se il numero è 7, devi prendere il settimo elemento nell'array,
+   Se il numero è 8, devi prendere l'ottavo elemento nell'array,
+   Se il numero è 9, devi prendere il nono elemento nell'array,
+   Se il numero è 10, devi prendere il decimo elemento nell'array,
+   Se il numero è 11, devi prendere l'undicesimo elemento nell'array e così via.
 
     Restituisci solo il JSON, niente spiegazione fuori dal JSON.
 
