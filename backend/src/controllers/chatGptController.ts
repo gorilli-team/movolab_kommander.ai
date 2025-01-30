@@ -44,14 +44,14 @@ export const callChatGpt = async (text: string, texts: string[]): Promise<Record
   };
   
   const prompt = `
-  Analizza il seguente messaggio del cliente: "${text}" e i seguenti messaggi precedenti ${texts} per ricavare i parametri necessari.
+  Analizza il seguente messaggio del cliente ${text} e i messaggi precedenti ${texts} per ricavare i parametri necessari.
   
   Segui i seguenti dati di riferimento,
 
-  - **Gruppi di veicoli**: ${JSON.stringify(referenceData.groups)}
+  - **Groups**: ${JSON.stringify(referenceData.groups)}
   - **Workflows**: ${JSON.stringify(referenceData.workflows)}
-  - **Location di noleggio**: ${JSON.stringify(referenceData.rental_location)}
-  - **Tipi di movimento**: ${JSON.stringify(referenceData.movement_types)}
+  - **Rental location**: ${JSON.stringify(referenceData.rental_location)}
+  - **Movement types**: ${JSON.stringify(referenceData.movement_types)}
 
   ed estrai i seguenti parametri:
 
@@ -65,7 +65,7 @@ export const callChatGpt = async (text: string, texts: string[]): Promise<Record
   8. Il workflow (id, nome). Attenzione tra prepagato prenotazione e prepagato apertura movo o anche solo tarvisio. Deve essere esplicita l'informazione. (es. prepagato prenotazione)
   9. PickUpLocation (id, nome), è legato a rental location.
   10. DropOffLocation (id, nome), è legato a rental location.
-  11. Il tipo di movimento, sicuramente ti verrà indicato il nome e non l'enum (es. noleggio)
+  11. Il tipo di movimento, ti verrà indicato il nome e non l'enum (es. noleggio), ma tu devi comunque ricavare anche l'enum.
   12. Response (response text, missing parameters). 
     =>  - ResponseText: Un messaggio indicativo riguardo l'esito della richiesta. Se ci sono tutti i parametri scrivi "Richiesta riuscita!". Se manca anche solo un parametro devi scrivere una frase del genere "Per completare la tua richiesta ho bisogno delle seguenti informazioni: parametro1, parametro2, etc.".
         - MissingParameters: Un array dove vengo inseriti i parametri mancanti, se non mancano parametri allora l'array sarà vuoto.
@@ -102,7 +102,7 @@ export const callChatGpt = async (text: string, texts: string[]): Promise<Record
       "name": "Tarvisio 8"
     },
     "movementType": {
-      "_id": " ",
+      "_id": "670a8d3937df135b0265aaf5",
       "name": "Noleggio",
       "enum": "NOL"
     }
@@ -113,7 +113,7 @@ export const callChatGpt = async (text: string, texts: string[]): Promise<Record
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
-        model: 'gpt-4',
+        model: 'gpt-3.5-turbo',
         messages: [
           { role: 'system', content: 'You are an assistant specialized in extracting key details from user messages.' },
           { role: 'user', content: prompt },
