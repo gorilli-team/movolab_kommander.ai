@@ -65,7 +65,7 @@ export const callChatGpt = async (text: string, texts: string[]): Promise<Record
   8. Il workflow (id, nome). Attenzione tra prepagato prenotazione e prepagato apertura movo o anche solo tarvisio. Deve essere esplicita l'informazione. (es. prepagato prenotazione)
   9. PickUpLocation (id, nome), è legato a rental location.
   10. DropOffLocation (id, nome), è legato a rental location.
-  11. Il tipo di movimento, ti verrà indicato il nome e non l'enum (es. noleggio), ma tu devi comunque ricavare anche l'enum.
+  11. Il tipo di movimento, ti verrà indicato il nome e non l'enum (es. noleggio), ma tu devi comunque ricavare anche l'enum. Deve essere esplicita l'informazione, non basta ricavarla dal verbo noleggiare. Devi dirti o noleggio, o comodato o movimento non produttivo.
   12. Response (response text, missing parameters). 
     =>  - ResponseText: Un messaggio indicativo riguardo l'esito della richiesta. Se ci sono tutti i parametri scrivi "Richiesta riuscita!". Se manca anche solo un parametro devi scrivere una frase del genere "Per completare la tua richiesta ho bisogno delle seguenti informazioni: parametro1, parametro2, etc.".
         - MissingParameters: Un array dove vengo inseriti i parametri mancanti, se non mancano parametri allora l'array sarà vuoto.
