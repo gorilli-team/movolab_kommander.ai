@@ -70,26 +70,50 @@ export const callChatGpt = async (text: string, texts: string[]): Promise<Record
     - **ResponseText**: Un messaggio indicativo riguardo l'esito della richiesta. Se ci sono tutti i parametri, scrivi "Richiesta riuscita!". Se manca anche solo un parametro, scrivi una frase del tipo: "Per completare la tua richiesta ho bisogno delle seguenti informazioni: parametro1, parametro2, etc."
     - **MissingParameters**: Un array dove vengono inseriti i parametri mancanti (es. ["parameter1", "parameter2"]). Se non mancano parametri, l'array sarà vuoto.
 
-  Non aggiungere note aggiuntive. Rispondi solo in formato JSON, come nell'esempio qui sotto ma aggiungendo tu le informazioni ricavate dai messaggi dell'utente:
-  E SOPRATTUTTO NON dedurre alcun parametro. Se un'informazione non è esplicitamente indicata nei messaggi dell'utente, non inserirla. Se un parametro manca, devi segnalarlo nei "missingParameters" e devi metterlo momentaneamente a null.
-{
-  "pickUpDate": "2025-03-10T10:00",
-  "dropOffDate": "2025-03-12T18:00",
-  "driver_name": "Antonio Rossi",
-  "customer_name": "Mario Rossi",
-  "driver_phone": "3463666034",
-  "customer_phone": "3463666034",
-  "response": {
-    "responseText": "Per completare la tua richiesta ho bisogno delle seguenti informazioni: workflow, movementType",
-    "missingParameters": ["workflow", "movementType"]
-  },
-  "group": [
-    { "_id": "63acb2d8acaff598c5508796", "mnemonic": "B", "description": "UTILITARIE" }
-  ],
-  "workflow": { "_id": null, "name": null },
-  "pickUpLocation": { "_id": "66f1d24c27e100b4a9e4d4b6", "name": "Rossi Noleggi Viale Cassala" },
-  "dropOffLocation": { "_id": "66f1d24c27e100b4a9e4d4b6", "name": "Rossi Noleggi Viale Cassala" },
-  "movementType": { "_id": null, "name": null, "enum": null }
+  Non aggiungere note aggiuntive. E SOPRATTUTTO NON dedurre alcun parametro. Se un'informazione non è esplicitamente indicata nei messaggi dell'utente, non inserirla. Se un parametro manca, devi segnalarlo nei "missingParameters" e devi metterlo momentaneamente a null.
+  Rispondi solo in formato JSON, come nell'esempio qui sotto ma aggiungendo tu le informazioni ricavate dai messaggi dell'utente.
+
+  - Se mancano delle informazioni:
+  {
+    "pickUpDate": "2025-03-10T10:00",
+    "dropOffDate": "2025-03-12T18:00",
+    "driver_name": "Antonio Rossi",
+    "customer_name": "Mario Rossi",
+    "driver_phone": "3463666034",
+    "customer_phone": "3463666034",
+    "response": {
+      "responseText": "Per completare la tua richiesta ho bisogno delle seguenti informazioni: workflow, movementType",
+      "missingParameters": ["workflow", "movementType"]
+    },
+    "group": [
+      { "_id": "63acb2d8acaff598c5508796", "mnemonic": "B", "description": "UTILITARIE" }
+    ],
+    "workflow": { "_id": null, "name": null },
+    "pickUpLocation": { "_id": "66f1d24c27e100b4a9e4d4b6", "name": "Rossi Noleggi Viale Cassala" },
+    "dropOffLocation": { "_id": "66f1d24c27e100b4a9e4d4b6", "name": "Rossi Noleggi Viale Cassala" },
+    "movementType": { "_id": null, "name": null, "enum": null }
+  }
+
+
+  - Se sono presenti tutte le informazioni:
+  {
+    "pickUpDate": "2025-03-10T10:00",
+    "dropOffDate": "2025-03-12T18:00",
+    "driver_name": "Antonio Rossi",
+    "customer_name": "Mario Rossi",
+    "driver_phone": "3463666034",
+    "customer_phone": "3463666034",
+    "response": {
+      "responseText": "Richiesta riuscita!",
+      "missingParameters": []
+    },
+    "group": [
+      { "_id": "63acb2d8acaff598c5508796", "mnemonic": "B", "description": "UTILITARIE" }
+    ],
+    "workflow": { "_id": "670a2413a3125360eead413f", "name": "Prepagato Prenotazione"},
+    "pickUpLocation": { "_id": "66f1d24c27e100b4a9e4d4b6", "name": "Rossi Noleggi Viale Cassala" },
+    "dropOffLocation": { "_id": "66f1d24c27e100b4a9e4d4b6", "name": "Rossi Noleggi Viale Cassala" },
+    "movementType": { "_id": "670a8d3937df135b0265aaf5", "enum": "NOL", "name": "Noleggio" },
   }
   `;
   
