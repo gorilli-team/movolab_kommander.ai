@@ -44,87 +44,90 @@ export const callChatGpt = async (text: string, texts: string[]): Promise<Record
   };
   
   const prompt = `
-  Analizza il seguente messaggio del cliente: "${text}", osserva eventuali messaggi precedenti ${texts} ed estrai i parametri.
+  Analizza il seguente messaggio del cliente: "${text}" e i seguenti messaggi precedenti ${texts} per ricavare i parametri necessari.
   
-  Hai questi dati di riferimento con i quali puoi aiutarti.
-  
+  Segui i seguenti dati di riferimento,
+
   - **Gruppi di veicoli**: ${JSON.stringify(referenceData.groups)}
   - **Workflows**: ${JSON.stringify(referenceData.workflows)}
   - **Location di noleggio**: ${JSON.stringify(referenceData.rental_location)}
   - **Tipi di movimento**: ${JSON.stringify(referenceData.movement_types)}
-  
-  Devi estrarre i seguenti parametri:
-  
+
+  ed estrai i seguenti parametri:
+
   1. La data di presa del veicolo (formato: YYYY-MM-DDTHH:MM).
   2. La data di restituzione del veicolo (formato: YYYY-MM-DDTHH:MM).
   3. Il nome del conducente.
   4. Il nome del cliente.
   5. Il numero di telefono del conducente.
   6. Il numero di telefono del cliente.
-  7. Il gruppo di veicoli (id, mnemonic, description). Il gruppo rappresenta il tipo di veicolo. Se dice mostrami tutti i veicoli, scegli tutti i veicoli e quindi tutti i gruppi.
-  8. Il workflow (id, nome).
+  7. Il gruppo di veicoli (id, mnemonic, description). Tendenzialmente il gruppo è rappresentato dal tipo di veicolo. Puoi anche scegliere tutti i gruppi quindi devi prenderli tutti. Se dice mostrameli tutti, prendili tutti.
+  8. Il workflow (id, nome). Attenzione tra prepagato prenotazione e prepagato apertura movo o anche solo tarvisio. Deve essere esplicita l'informazione. (es. prepagato prenotazione)
   9. PickUpLocation (id, nome), è legato a rental location.
   10. DropOffLocation (id, nome), è legato a rental location.
-  11. Il tipo di movimento, sicuramente ti verrà indicato il nome per intero, e non l'enum.
+  11. Il tipo di movimento, sicuramente ti verrà indicato il nome e non l'enum (es. noleggio)
   12. Response (response text, missing parameters). 
-    - **ResponseText**: Un messaggio indicativo riguardo l'esito della richiesta. Se ci sono tutti i parametri, scrivi "Richiesta riuscita!". Se manca anche solo un parametro, scrivi una frase del tipo: "Per completare la tua richiesta ho bisogno delle seguenti informazioni: parametro1, parametro2, etc."
-    - **MissingParameters**: Un array dove vengono inseriti i parametri mancanti (es. ["parameter1", "parameter2"]). Se non mancano parametri, l'array sarà vuoto.
+    =>  - ResponseText: Un messaggio indicativo riguardo l'esito della richiesta. Se ci sono tutti i parametri scrivi "Richiesta riuscita!". Se manca anche solo un parametro devi scrivere una frase del genere "Per completare la tua richiesta ho bisogno delle seguenti informazioni: parametro1, parametro2, etc.".
+        - MissingParameters: Un array dove vengo inseriti i parametri mancanti, se non mancano parametri allora l'array sarà vuoto.
 
-  Non aggiungere note aggiuntive. E SOPRATTUTTO NON dedurre alcun parametro. Se un'informazione non è esplicitamente indicata nei messaggi dell'utente, non inserirla. Se un parametro manca, devi segnalarlo nei "missingParameters" e devi metterlo momentaneamente a null.
-  Rispondi solo in formato JSON, come nell'esempio qui sotto ma aggiungendo tu le informazioni ricavate dai messaggi dell'utente.
-
-  - Se mancano delle informazioni:
+  Se un parametro non è presente, restituisci "null" al momento invece di un valore predefinito come "Non fornito". Non dedurre tu campi se non hai le informazioni esatte.
+  Ma se alla chiamata successiva leggendo tra i testi riesci a ricavare dei parametri, allora inseriscili nel json finale. L'obiettivo è quello che il JSON finale abbia tutti i parametri e la richiesta sia riuscita.
+  
+  Rispondi in formato JSON, come nell'esempio qui sotto. Non aggiungere note aggiuntive sotto il json.
+  
   {
-    "pickUpDate": "2025-03-10T10:00",
-    "dropOffDate": "2025-03-12T18:00",
-    "driver_name": "Antonio Rossi",
-    "customer_name": "Mario Rossi",
-    "driver_phone": "3463666034",
-    "customer_phone": "3463666034",
+    "pickUpDate": "2024-12-07T17:13",
+    "dropOffDate": "2024-12-08T16:16",
+    "driver_name": "Mario Rossi",
+    "customer_name": "Giovanni Verdi",
+    "driver_phone": "+39 012 345 6789",
+    "customer_phone": "+39 987 654 3210",
     "response": {
-      "responseText": "Per completare la tua richiesta ho bisogno delle seguenti informazioni: workflow, movementType",
-      "missingParameters": ["workflow", "movementType"]
+      "responseText": "Richiesta riuscita! / Per completare la tua richiesta ho bisogno delle seguenti informazioni: Il flusso e puoi scegliere tra i seguenti, etc.",
+      "missingParameters": "[parameter1, parameter2]"
     },
     "group": [
-      { "_id": "63acb2d8acaff598c5508796", "mnemonic": "B", "description": "UTILITARIE" }
+      { "_id": "63acb41afd939e8f05d5069a", "mnemonic": "2WC", "description": "SCOOTER" }
     ],
-    "workflow": { "_id": null, "name": null },
-    "pickUpLocation": { "_id": "66f1d24c27e100b4a9e4d4b6", "name": "Rossi Noleggi Viale Cassala" },
-    "dropOffLocation": { "_id": "66f1d24c27e100b4a9e4d4b6", "name": "Rossi Noleggi Viale Cassala" },
-    "movementType": { "_id": null, "name": null, "enum": null }
-  }
-
-
-  - Se sono presenti tutte le informazioni:
-  {
-    "pickUpDate": "2025-03-10T10:00",
-    "dropOffDate": "2025-03-12T18:00",
-    "driver_name": "Antonio Rossi",
-    "customer_name": "Mario Rossi",
-    "driver_phone": "3463666034",
-    "customer_phone": "3463666034",
-    "response": {
-      "responseText": "Richiesta riuscita!",
-      "missingParameters": []
+    "workflow": {
+      "_id": "670a8d3937df135b0265aaf4",
+      "name": "Prepagato Prenotazione"
     },
-    "group": [
-      { "_id": "63acb2d8acaff598c5508796", "mnemonic": "B", "description": "UTILITARIE" }
-    ],
-    "workflow": { "_id": "670a2413a3125360eead413f", "name": "Prepagato Prenotazione"},
-    "pickUpLocation": { "_id": "66f1d24c27e100b4a9e4d4b6", "name": "Rossi Noleggi Viale Cassala" },
-    "dropOffLocation": { "_id": "66f1d24c27e100b4a9e4d4b6", "name": "Rossi Noleggi Viale Cassala" },
-    "movementType": { "_id": "670a8d3937df135b0265aaf5", "enum": "NOL", "name": "Noleggio" },
+    "pickUpLocation": {
+      "_id": "66eb13cb072e8e794505bcaf",
+      "name": "Tarvisio 8"
+    },
+    "dropOffLocation": {
+      "_id": "66eb13cb072e8e794505bcaf",
+      "name": "Tarvisio 8"
+    },
+    "movementType": {
+      "_id": " ",
+      "name": "Noleggio",
+      "enum": "NOL"
+    }
   }
-  `;
-  
-  
+`;
+
   try {
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
-        model: 'gpt-4o-mini',
+        model: 'chatgpt-4o-latest',
         messages: [
-          { role: 'developer', content: 'You are an assistant specialized in extracting key details from user messages.' },
+          {
+            role: 'system',
+            content: `
+              Sei un assistente specializzato nell'estrazione di parametri da messaggi utente. 
+              Il tuo compito è analizzare il messaggio dell'utente e i messaggi precedenti per estrarre i parametri richiesti.
+              Devi sempre restituire un JSON strutturato con i seguenti campi:
+              - I parametri estratti (se presenti).
+              - Una "responseText" che indica se la richiesta è riuscita o se mancano informazioni.
+              - Un array "missingParameters" che elenca i parametri mancanti (se ce ne sono).
+              Se un parametro non è presente, restituisci "null" per quel campo.
+              Non dedurre valori predefiniti se non hai informazioni sufficienti.
+            `
+          },
           { role: 'user', content: prompt },
         ],
       },
@@ -244,3 +247,4 @@ export const selectVehicle = async (userText: string, availableVehicles: any[]):
   }
   
 };
+
